@@ -1,0 +1,54 @@
+Run the IOC post-call analyst job below. It runs at 1:30, 3:30, 5:30, 7:30 and 9:30 PM IST. This job writes POST-CALL NOTE 2 ONLY. Never write or edit a PRE-CALL NOTE 1. Tools: the GHL connector (mcp__ghl__search_operations / describe_operation / execute_operation, location LZkgKOxmYpiZl17MKuno), the Supabase connector (execute_sql on project ugiurxkbbuhtvbehpkvb — the company call archive, READ ONLY here: SELECT queries only) and the Fathom connector (list_meetings, get_meeting_summary, get_meeting_transcript) as fallback.
+
+=== SCOPE ===
+- Calendars: ads cn8ObACn8w4MSVgj34ij • organic aIvElUyzugnymfi07MeD • outbound Cur0ODFLBvPyxHuZzDCz, ubVSocHCVcLmflnrd4Pu
+- Only appointments assigned to Sahil (id4Djgr9aqYqGXn7MNRo) or Aakash (wyD6iOScp1NU3uVXU78L).
+- Use get-calendar-events for each calendar with startTime = now − 26 hours and endTime = now, in epoch milliseconds. Keep appointments whose start time was 30 minutes to 26 hours ago and whose status is not cancelled.
+- Check get-appointment-notes first. Skip the appointment if the first line of any note contains "NOTE 2", whoever wrote it. That covers "📞 POST-CALL NOTE 2" and Viktor's "📞 NOTE 2".
+
+=== GATHER ===
+1. CALL RECORDING — Supabase FIRST (it holds BOTH Sahil's and Aakash's Fathom calls, synced hourly):
+   SELECT recording_id, teammate, title, meeting_date, duration_min, fathom_url, share_url, summary FROM meetings WHERE meeting_date BETWEEN '<start − 2h>' AND '<start + 3h>' AND (participants::text ILIKE '%<prospect email>%' OR title ILIKE '%<prospect first name>%') ORDER BY duration_min DESC;
+   Take the longest matching recording (ignore 1–6 min closer-only fragments). Read the summary, then the transcript in chunks: SELECT substring(transcript from 1 for 25000) … then from 25001, etc. Transcript lines look like "[00:18:00] Name: text" → seconds = h*3600+m*60+s for timestamp links on the fathom_url (https://fathom.video/calls/{id}?timestamp={seconds}).
+   Only if Supabase has nothing: Fathom list_meetings with created_after = start − 2h, match name in title/invitees within ±60 min, summary first, transcript for quotes (max 3 transcripts per run).
+2. If no recording is found anywhere:
+   - If the GHL status is "noshow", write a 3-line NO-SHOW note: title, NEXT line, and a SEND THIS rebook WhatsApp message.
+   - Otherwise SKIP with the reason "no recording yet in Supabase or Fathom" (the next run will catch it). Never guess a no-show.
+3. Read the PRE-CALL NOTE 1 on the same appointment: verdict, gate, grade, predicted flags. If there is none, say "no Note 1" in VS NOTE 1.
+4. Contact phone, for the WhatsApp link.
+5. Contact grade: the Lead Grade custom field and the Note 1 AI GRADE. ROUTING RULE: a Good/Best lead whose call was taken by Sahil gets NEXT owner = Aakash for the follow-up close.
+6. Opportunity: search-opportunity by contactId for the current stage in "Sales Pipeline (DFY Offer)". The stages are: Call Confirmed, No-Show, Showed (call done), Offer Made, Follow-Up, Sale (DFY), Sale (DIH), Dead Prospect.
+
+=== DECIDE ===
+Outcome, one of: PAID FULL • PAID SPLIT • DEPOSIT • OFFER MADE • FOLLOW-UP • NURTURE • NO-SHOW • LOST (reason).
+SUGGESTED STAGE must be one of the pipeline stage names above and must match the outcome. NEVER move the stage yourself, and never update the contact or the opportunity.
+Money tier check: ≥₹2L/mo real revenue → 6L Accelerator (+3L DFY) • ₹50k–2L → 3L DFY • <₹50k → DIH ₹1.77L or Kickstarter. Say in GRADE if the wrong tier was pitched.
+
+=== FORMAT (strict — match the reference note below exactly in structure) ===
+- HTML only: <b>, <br>, <ul><li>, <a href>. No markdown. ONE continuous HTML string with no newline characters.
+- Put <br> after the title, the NEXT line, the plain line and the SUGGESTED STAGE line. Each section is <b>SECTION</b> followed directly by <ul><li>…</li></ul>.
+- 24 lines max, max 3 bullets per section except SAID (up to 6), one-line bullets of about 15 words or fewer.
+- EVERY timestamp is a clickable deep link: <a href="https://fathom.video/calls/{callId}?timestamp={seconds}">MM:SS</a>. Use the call URL from Fathom and the timestamp in seconds.
+- Quote the prospect's own words in "quotes", with the timestamp link beside each quote.
+- Objections use the tags RAISED / NOT RAISED → HANDLED / PARTLY HANDLED / NOT ADDRESSED → STILL OPEN / CLOSED.
+- GRADE uses ✔ <b>Landed:</b> (1–2 bullets) and ✘ <b>Fix:</b> (1–3 bullets). Always check: was the IOC price stated, was payment asked, was a dated follow-up booked, did the closer re-explain videos instead of checking they were watched, did the closer continue on a broken call instead of rescheduling. Add REPEAT to a Fix if the same miss appears in this closer's last 5 Note 2s.
+- WhatsApp link: strip "+" and any leading 0, prefix 91 → <a href="https://wa.me/91XXXXXXXXXX">WhatsApp</a>. Never print a raw URL.
+- Skip empty sections. Never write "none found".
+Section order:
+1. <b>📞 POST-CALL NOTE 2 • OUTCOME: OUTCOME — Name</b><br>
+2. <b>NEXT:</b> one action • owner • by when (a real date)<br>
+3. Plain line: Day DD Mon, H:MM AM/PM IST • closer: Name • length • joined on phone/laptop (+ "bad connection" if the call kept dropping) • <a href="fathom call url">▶ Fathom recording</a> • <a href="wa.me link">WhatsApp</a><br>
+4. <b>SAID</b><ul>: Numbers (past AND current: leads, calls, clients closed, price, revenue) / Goal (their number + their own math) / Must-have (the one condition they need to buy) / Urgency (why now, other experts tried) / Videos (WATCHED or NOT — if they couldn't ask a single question about them or asked the closer to explain everything, write NOT WATCHED) / Wallet + decider (IOC price said? payment asked?), each with a quote and a timestamp link</ul>
+5. <b>OBJECTIONS</b><ul>: each objection with its status tags and a timestamp link</ul>
+6. <b>VS NOTE 1</b><ul>: Gate held or broke • did the predicted flag arrive</ul>
+7. <b>GRADE</b><ul>: ✔ Landed / ✘ Fix</ul>
+8. <b>SUGGESTED STAGE</b> stage name (Sales Pipeline – DFY)<br>
+9. <b>SEND THIS</b> WhatsApp recap to the prospect inline: ≤4 short sentences in their words, one clear ask with two concrete options, never "whenever you're ready"
+
+=== REFERENCE NOTE (a real note — copy this exact HTML structure and style) ===
+<b>📞 POST-CALL NOTE 2 • OUTCOME: OFFER MADE — Yash Kaushik</b><br><b>NEXT:</b> lock a dated decision call + ask ≥₹10k deposit to hold the build slot • Aakash • by Sat 26 Sep<br>Thu 24 Sep, 11:00 AM IST • closer: Aakash • 60 min • <a href="https://fathom.video/calls/833997416">▶ Fathom recording</a> • <a href="https://wa.me/917737731359">WhatsApp</a><br><b>SAID</b><ul><li><b>Numbers:</b> FITTR nets ₹3–4L/mo after commission (form said ₹2–3L) — <a href="https://fathom.video/calls/833997416?timestamp=357">05:57</a></li><li><b>Videos:</b> WATCHED — "I watched the video, I watched the funnel" <a href="https://fathom.video/calls/833997416?timestamp=406">06:46</a></li><li><b>Wallet / decider:</b> ₹7.08L in 2 parts → "No problem" <a href="https://fathom.video/calls/833997416?timestamp=3232">53:52</a>; "Yes, yes" <a href="https://fathom.video/calls/833997416?timestamp=2829">47:09</a></li></ul><b>OBJECTIONS</b><ul><li><b>FITTR exit / 52-week clients:</b> RAISED → notice-period plan offered, no date — STILL OPEN <a href="https://fathom.video/calls/833997416?timestamp=967">16:07</a></li><li><b>Price:</b> NOT RAISED — took ₹7.08L split without pushback <a href="https://fathom.video/calls/833997416?timestamp=2669">44:29</a></li></ul><b>VS NOTE 1</b><ul><li><b>Gate:</b> held — revenue is his FITTR payout; videos watched before the call</li><li><b>Predicted flag:</b> platform dependency arrived — it is the only thing between him and a yes</li></ul><b>GRADE</b><ul><li>✔ <b>Landed:</b> recapped his numbers first, pitched the right 6L tier with split</li><li>✘ <b>Fix:</b> after "yes" (47:09) talked 10 min on burn-the-boats — no deposit asked</li><li>✘ <b>Fix:</b> he left for another call (<a href="https://fathom.video/calls/833997416?timestamp=3334">55:34</a>) with no follow-up booked</li></ul><b>SUGGESTED STAGE</b> Offer Made (Sales Pipeline – DFY)<br><b>SEND THIS</b> Yash, great call today. Plan recap: your own brand to ₹5–10L/mo in 12 months, ₹7.08L in 2 parts. Your one step: speak to FITTR HR on exit + client handover. Can we lock 15 min on Saturday to finalise — 11 AM or 4 PM?
+
+=== WRITE ===
+Use create-appointment-note: POST /calendars/appointments/{appointmentId}/notes with {"body": "<html note>", "userId": "<assigned user id>"} and idempotencyKey "note2-{appointmentId}".
+Write to the APPOINTMENT note ONLY, never the contact note, because GHL mirrors it onto the contact. Post nothing to Slack, WhatsApp, email or Google Calendar. SEND THIS is a draft for the closer to send.
+Finish with a 1-line summary per appointment: Name • outcome • next • written / skipped (reason).
