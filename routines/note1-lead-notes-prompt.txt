@@ -195,4 +195,4 @@ Per alert:
 6. slack_send_message to C0C3JAH938X with thread_ts = the alert's ts, no broadcast, Slack version.
 
 === FINISH ===
-One line per item, grouped under "Booked" and "Disqualified": Name • closer • grade • signals (invest / start / sole DM) • caps applied • applications on file (N, answers flipped y/n) • verdict • IG: @handle (reader used, corrected y/n, N variants tried) / exists-unread / not found • extra accounts/links: N followed, list any NOT RESEARCHED by handle • GHL note written / edited / reused / skipped (reason) • Slack: posted/skipped per thread (reason).
+One line per item, grouped under "Booked" and "Disqualified": Name • closer • grade • signals (invest / start / sole DM) • caps applied • applications on file (N, answers flipped y/n) • verdict • rescheduled/cancelled handled (y/n) • GHL engagement score • IG: @handle (reader used, corrected y/n, N variants tried) / exists-unread / not found • extra accounts/links: N followed, list any NOT RESEARCHED by handle • GHL note written / edited / reused / skipped (reason) • Slack: posted/skipped per thread (reason).

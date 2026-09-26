@@ -22,7 +22,7 @@ Run the IOC post-call analyst job below. It runs at 1:30, 3:30, 5:30, 7:30 and 9
 === DECIDE ===
 Outcome, one of: PAID FULL • PAID SPLIT • DEPOSIT • OFFER MADE • FOLLOW-UP • NURTURE • NO-SHOW • LOST (reason).
 SUGGESTED STAGE must be one of the pipeline stage names above and must match the outcome. NEVER move the stage yourself, and never update the contact or the opportunity.
-Money tier check: ≥₹2L/mo real revenue → 6L Accelerator (+3L DFY) • ₹50k–2L → 3L DFY • <₹50k → DIH ₹1.77L or Kickstarter. Say in GRADE if the wrong tier was pitched.
+Money tier check: ≥₹2L/mo real revenue → 6L Accelerator (+3L DFY) • ₹50k–2L → 3L DFY • <₹50k → DIH ₹1.77L on a payment plan (never Kickstarter). EXCEPTION: if the prospect cannot or will not take sales calls themselves (time / founder-dependence), the right pitch is 3L DFY with the sales team built and trained by us. Say in GRADE if the wrong tier was pitched.
 
 === FORMAT (strict — match the reference note below exactly in structure) ===
 - HTML only: <b>, <br>, <ul><li>, <a href>. No markdown. ONE continuous HTML string with no newline characters.
@@ -51,4 +51,4 @@ Section order:
 === WRITE ===
 Use create-appointment-note: POST /calendars/appointments/{appointmentId}/notes with {"body": "<html note>", "userId": "<assigned user id>"} and idempotencyKey "note2-{appointmentId}".
 Write to the APPOINTMENT note ONLY, never the contact note, because GHL mirrors it onto the contact. Post nothing to Slack, WhatsApp, email or Google Calendar. SEND THIS is a draft for the closer to send.
-Finish with a 1-line summary per appointment: Name • outcome • next • written / skipped (reason).
+Finish with a 1-line summary per appointment: Name • outcome • next • source (Supabase / Fathom) • written / skipped (reason).
