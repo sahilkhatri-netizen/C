@@ -1,4 +1,4 @@
-# PRE-CALL NOTE 1 — redraft (DRAFT for Aakash to finalise)
+# PRE-CALL NOTE 1 — redraft (FINALISED 5 Nov 2026 — applied to note1-lead-notes-prompt.txt)
 
 Source of the new script: **Independent Online Closer – Playbook → Sales Process tab** (Aakash, #sales-internal-team, 28 Oct), the **S.P.E.E.D. / P.U.M.A.** update in High Ticket Sales Mastery (3 Nov), and the Sales Multiplier decisions 22 Oct – 3 Nov (₹3L default, ₹6L only for strong prospects, founder on the call before a big-package pitch, max two payment parts and no payment plans, ₹10k minimum onboarding deposit, red-flag leads wait until they watch the video, triage leads with their struggle not their income, no case study before the video, Offer Breakdown video is the source of truth, junk leads are not dialed, can't-invest leads go to the free community).
 
@@ -59,7 +59,7 @@ Paste the block below over PART A steps 2–4 in `note1-lead-notes-prompt.txt`. 
 - **Rule 7 (offer video):** also treat a WhatsApp "WATCHED" or "READY" reply as watched for the current booking.
 - **STEP 2 buying signals:** "Maybe if there's a payment plan" drops from ok to weak-ish ("ok only if they also say Yes to the ₹1L minimum"), since payment plans are gone.
 
-## Open questions for Aakash
-1. Jumpstart price: the Playbook says ₹1,00,000 + GST = ₹1,18,000, the routine prompt (and Oct notes) say "DIH ₹1.77L". Which is current?
-2. Should HOT leads (watched, aligned) be told to pay on the triage call itself, as S.P.E.E.D. Step 4 says, or always keep the strategy call?
-3. Keep posting the first Note 1 in BOTH channels, or booking channel only?
+## Decisions (Aakash, 5 Nov 2026)
+1. Jumpstart = ₹1,00,000 + GST = ₹1,18,000. The old "DIH ₹1.77L on a payment plan" is gone from both parts of the prompt.
+2. HOT leads are closed on the triage call itself (payment/deposit taken on that call, no separate strategy call).
+3. The first Note 1 still goes to both Slack channels, but it is generated once and the same text is copied to the confirmed-channel thread. Reschedule / cancel / no-show get a one-line reply only, never a re-post.
