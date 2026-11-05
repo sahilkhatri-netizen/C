@@ -8,7 +8,8 @@ description: Which Supabase table, function, edge function or live connector ser
 Source of truth: `select public.skill_load('channel-map');` in the Supabase `skills` table. This file is a mirror for Claude Code sessions. If the two differ, the table wins; re-read it and update this file.
 
 ## How to choose (every time)
-1. Name the domain from the table below. One request can touch several.
+0. Structured lookup first: `select * from public.where_is('<the question or topic>');` It returns the data point (table, view or function, query pattern, live alternative, caveats) and the connection (identifier, how Claude reaches it, allowed write path). The tables behind it are `connections` (25 rows, one per connected system or account) and `data_points` (36 rows). Add a row whenever a question had to be answered by hand.
+1. If nothing scores above 1, name the domain from the table below. One request can touch several.
 2. "Now / today / live" questions → the LIVE column. Everything else → the SUPABASE COPY, and say how old it is (`synced_at`, or `select * from public.freshness;`).
 3. Writing? Use only the WRITE PATH listed. If none is listed, do not improvise: say which Supabase step is missing.
 4. Prefer an existing function (`find_client`, `ioc_search`, `meeting_insight_get`, `meetings_on`, `ig_profile`, `skill_load`) over raw SQL on the big tables.

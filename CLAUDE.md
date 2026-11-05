@@ -3,6 +3,7 @@
 This repo holds prompt text and reference docs for IOC's automation. The live system is the Supabase project `ugiurxkbbuhtvbehpkvb` ("Meetings Dumb"): about 180 tables, 85 edge functions, pg_cron jobs, the IOCtopus Slack/WhatsApp bot, and Supabase-side Claude jobs (`ai_jobs`).
 
 ## Before touching Supabase or any connector
+0. Run `select * from public.where_is('<question or topic>');` on the project. It resolves the question to the right connection and data point from the `connections` and `data_points` tables. Those two tables are the map; the files below explain them.
 1. Read `.claude/skills/channel-map/SKILL.md` (where each channel's data lives, freshness, allowed writes) and `.claude/skills/playbook/SKILL.md` (how to get each task done: best path, account, exact call, fallback).
 2. Live copies: `select public.skill_load('channel-map');` and `select public.skill_load('playbook');`. If a file differs from the table, the table wins; update the file.
 3. When acting as or for the bot, also load `core`, `permissions` and `knowledge-lookup` with `skill_load()`. Those hold the hard limits and who may ask for what.
