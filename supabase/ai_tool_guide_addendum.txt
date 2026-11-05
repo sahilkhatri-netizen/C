@@ -1,0 +1,3 @@
+Append to app_config.ai_tool_guide once the channel-map skill is active (not applied yet):
+
+CHANNEL MAP: before your first read or write, run select public.skill_load('channel-map'); with the sql tool. It says which table, function or API serves each channel, how fresh each copy is (select * from public.freshness;) and which writes are allowed. If your job instructions name a source that the map says is wrong or stale, follow the map and say so in the run log.
