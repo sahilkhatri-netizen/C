@@ -1,5 +1,1 @@
-Append to app_config.ai_tool_guide once the channel-map and playbook skills are active (not applied yet):
-
-CHANNEL MAP: before your first read or write, run select public.skill_load('channel-map'); with the sql tool. It says which table, function or API serves each channel, how fresh each copy is (select * from public.freshness;) and which writes are allowed. If your job instructions name a source that the map says is wrong or stale, follow the map and say so in the run log.
-
-PLAYBOOK: before writing "cannot" or "not available" in a run log, run select public.skill_load('playbook'); and try the path and fallback it lists (public.google() reaches 7 Google accounts; outboxes reach Slack and WhatsApp). Only if those fail, log what is missing and which Supabase step would fix it.
+Applied 6 Nov 2026. See supabase/where_is_rollout_20261106.sql for the exact text and rollback.
