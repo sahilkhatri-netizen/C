@@ -53,8 +53,9 @@ Changes (no ai-worker redeploy):
   daily_review, funnel_alert, pipeline_sync_lite were already Haiku).
 - `ioctopus` screen flipped to LITE (Haiku) by default; FULL (Sonnet) only for risky confirmations, money/record
   changes, bot training, deep analysis/strategy, long multi-part asks. Meeting drafts, scans, SOD now LITE.
-- `lead_notes` screen: Sonnet only for new bookings without Note 1, reschedules, unclear cases; disqualified
-  (incl. clinicians) and FCB buyers now Haiku.
+- `lead_notes` screen: Sonnet for new bookings without Note 1, reschedules, unclear cases, FCB buyers with no
+  earlier note, and clinician / strong-signal disqualified leads; ordinary disqualified stay on Haiku. (A side-by-side
+  check showed Sonnet catches subtler issues, e.g. income maths that doesn't add up, so sales-relevant notes keep it.)
 - Kept on Sonnet: `note2`, `brain_learn`, `brain_insights` (~$0.25/day).
 - `ai_cost_check()` (cron `ai-cost-check`, 9:30 AM IST): DMs Sahil a per-job breakdown when yesterday was over
   `app_config.ai_daily_target_usd` (2.0). Yesterday's cost is also in the brain brief inputs.
