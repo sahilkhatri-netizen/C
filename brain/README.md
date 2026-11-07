@@ -40,6 +40,25 @@ Issues found while building (for a human to decide):
 - The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule. Fixed 7 Nov, see below.
 - Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
 
+## Scheduled Claude tasks instead of API for batch brain work (7-8 Nov 2026)
+
+Batch jobs that nobody waits on run as scheduled Claude Code tasks (account usage, no API bill). The API jobs
+stay as automatic fallbacks two hours later, and only run when `brain_runs` has no row for that job and day.
+
+| Scheduled task (IST) | Does | API fallback |
+|---|---|---|
+| IOC brain: nightly learning, 1:10 AM daily | follows `ai_jobs.brain_learn` instructions for yesterday | `ai-brain-learn` 3:10 AM |
+| IOC brain: daily brief, 9:20 AM Mon-Sat (skips off days) | follows `ai_jobs.brain_insights` instructions | `ai-brain-insights` 11:20 AM |
+| IOC brain: weekly deep pass, Sunday 11:15 AM | rewrites `brain_pages` (company profile + one page per team member), fixes contradicting facts, DMs Sahil a summary | none |
+
+- Sessions have no connector tools (not available for this organization's scheduled tasks), so they run SQL through
+  the Supabase Management API (`api.supabase.com`, credential injected by the environment proxy).
+- `brain_run_done(job, day, source)` marks completion; `brain_week_inputs()` feeds the weekly pass.
+- The company profile's first part is in the company snapshot (every reply); each person page's first part is in
+  their person card.
+- Limits: about 2 scheduled runs a day, nothing real-time or event-driven. IOCtopus replies, lead notes, Note 2,
+  funnel alerts and EOD drafts stay on the API.
+
 ## Cost: target $2/day (7 Nov 2026)
 
 Findings (last 14 days, repriced): real spend ~$6.94/day, of which Sonnet 5.5 was $6.77. Everything on Haiku 5.5
