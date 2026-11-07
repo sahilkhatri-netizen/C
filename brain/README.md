@@ -37,8 +37,26 @@ Scope decision (7 Nov): internal team and business first. Client WhatsApp groups
 
 Issues found while building (for a human to decide):
 - Team Tasks list is mostly stale (e.g. 154 of Suchita's 188 open tasks overdue, 121 of Aakash's 140).
-- The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule.
+- The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule. Fixed 7 Nov, see below.
 - Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
+
+## Nudge clean-up (7 Nov 2026)
+
+What was actually happening (last 7 days):
+- Counts were inflated: `outbox_log_people` logged a DM twice when it also @-mentioned the recipient (every
+  10:30 PM EOD reminder showed up twice), and logged everyone named in a nudge as "nudged" (e.g. "@Akhtar,
+  @Suchita asked you…" counted against Suchita).
+- Real repetition came from the 10:07 / 4:07 scan: the 20 h rule meant every open item was re-nudged every day,
+  several separate messages could hit one person in the same scan, and there was no per-person limit.
+- Saturday tracker reminders to Suhel (7 DMs) are jobs he created himself; left as they are.
+
+Changes:
+- `outbox_log_people`: one row per person per message; only the DM recipient or the @-mentions at the start
+  count as asked, everyone else is logged as `mentioned`.
+- `loop_nudge`: max 3 items per person per IST day (`HOLD` beyond that, comes back next scan); skips people who are
+  away and company off days; escalation to Aakash waits 44 h after the 2nd nudge.
+- `ai-employee-scan` skill v11: one message per person per scan (bullets), quality over volume.
+- `brain_insight_inputs`: "over-nudged" counts only unprompted nudges.
 
 ## Phase 1 (live 7 Nov 2026)
 
