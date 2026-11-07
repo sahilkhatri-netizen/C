@@ -40,6 +40,24 @@ Issues found while building (for a human to decide):
 - The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule. Fixed 7 Nov, see below.
 - Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
 
+## Stuck situations detector (8 Nov 2026)
+
+Goal: spot things like Hetal's case without being told: money overdue, a decision made but not carried out,
+systems that disagree, the same item carried over in EODs, nobody reviewing.
+
+- `brain_stuck_cases(min_score)` scores every signed, not-offboarded client from Asana card status and pending
+  payment, GHL invoices still owing, open Asana tasks while paused, EOD "Overdue" carry-overs (21 days), last weekly
+  review, the latest pause/discontinue/extension/refund fact with nothing learned since (60 days), and meeting
+  mentions (14 days). Names match on the full name, or the first name when unique and not a team member's.
+  Contracts that ended 60+ days ago are capped at score 2 (one-time clean-up, not daily news).
+- Cached in `brain_stuck` by `brain_stuck_refresh()` every 2 h (cron `brain-stuck-2h`; ~18 s; old rows are marked
+  `active = false`, never deleted).
+- Used by: `client_card` (a "⚠ STUCK" line for score 4+, so IOCtopus raises it whenever the client comes up), the
+  daily brief inputs (top 8, with instructions: what was decided, what is not done, who must act, recommended next
+  step) and the Sunday deep pass inputs.
+- First run (8 Nov): Hetal Panchal 11, Chaitali Khamar 6, Sai Ram 6, then Gopal Verma, Roshan, Neehan, Manjinder,
+  Sagar, Nitish (4). Gap found: Hetal's WhatsApp group is not connected to the group reader.
+
 ## Scheduled Claude tasks instead of API for batch brain work (7-8 Nov 2026)
 
 Batch jobs that nobody waits on run as scheduled Claude Code tasks (account usage, no API bill). The API jobs
