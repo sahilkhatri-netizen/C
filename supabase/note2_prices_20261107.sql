@@ -1,0 +1,7 @@
+-- Note 2 (ai_jobs.note2): money tier check moved to the 5 Nov 2026 Closer Playbook prices
+-- (Jumpstart ₹1.18L / Accelerator ₹3.54L / Multiplier ₹7.08L, max two parts, no payment plans,
+-- ₹10k deposit). GRADE now flags old prices, payment plans, missing deposit, Multiplier without Aakash.
+-- CALL SCORE 10 wording: "first of at most two agreed parts" (₹1.77L of ₹3.54L still valid).
+-- Applied live 7 Nov 2026. Backup: app_config key 'note2_instructions_backup_20261107'.
+-- Rollback: update ai_jobs set instructions = (select value from app_config where key =
+--   'note2_instructions_backup_20261107'), updated_at = now() where slug = 'note2';
