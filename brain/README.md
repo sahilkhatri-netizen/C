@@ -1,6 +1,6 @@
 # IOC company brain
 
-Goal (Sahil, 7 Nov 2026): IOCtopus and every AI job answer like someone who knows the whole company,
+Goal (7 Nov 2026): IOCtopus and every AI job answer like someone who knows the whole company,
 including things the asker did not think to ask. AI spend target: under $180 a month (target, not a hard stop;
 the existing `ai_monthly_cap_usd` stays at 190).
 
@@ -11,11 +11,34 @@ Everything lives in the Supabase project `ugiurxkbbuhtvbehpkvb`. No new software
 | Phase | What | Status |
 |---|---|---|
 | 1 | Give the bot what the company already knows at answer time | **Live 7 Nov** |
-| 2 | Complete memory: client WhatsApp groups, team WhatsApp, Asana, Note 1/2, GHL notes, Drive SOPs; restart fact extraction (stalled since ~12 Oct) | Next |
-| 3 | Company model: weekly company profile + nightly page per client and per person | |
+| 2 | Internal memory + learning: nightly fact learning restarted, team member cards, company snapshot | **Live 7 Nov** |
+| 3 | Company model: deeper per-person / per-topic pages (snapshot + person cards are the first version) | |
 | 4 | Reasoning: hard questions get Opus with thinking, research steps, self-check with sources | |
-| 5 | Insight engine: daily/weekly scans across sources for risks, contradictions, missed promises | |
+| 5 | Insight engine (internal): daily brain brief | **Live 7 Nov** |
 | 6 | One brain everywhere (MCP server) + learning from draft-vs-sent edits + weekly scored test set | |
+
+Scope decision (7 Nov): internal team and business first. Client WhatsApp groups and client-facing work come later.
+
+## Phase 2 + 5, internal (live 7 Nov 2026)
+
+- Fact learning had stopped: the old `nightly_review` scheduled task was retired around 8 Oct and the new
+  `daily_review` ai_job only edits skills. New ai_job `brain_learn` (Sonnet, ~4 calls, ~$0.08/night, cron
+  `ai-brain-learn` 12:40 AM IST) reads `brain_day_digest(day)` (internal meetings + insights, people's Slack in team
+  channels, Aakash/Sahil DMs and WhatsApp to the bot, EODs; Slack IDs turned into names by `slack_names()`),
+  checks proposals with `brain_fact_candidates()` and saves with `knowledge_save_batch()` (marks older facts
+  superseded). Backfill of 8 Oct to 5 Nov runs one day every 4 min (`brain-backfill`, unschedules itself).
+- `person_card()` now adds: open/overdue Team Tasks (with a note that the list is not fully maintained), what is
+  due this week, open loops they owe, latest EOD, and what they own.
+- `brain_snapshot` (rebuilt every 30 min, `brain-snapshot-30m`): ads funnel last 7 days vs previous 7, month to
+  date, GHL cash vs same days last month, who is away, company calendar, recent decisions. Loaded into every reply.
+- ai_job `brain_insights` (cron `ai-brain-insights`, 9:50 AM IST Mon-Sat, skips company off days): reads
+  `brain_insight_inputs()` (snapshot, funnel by day, meeting promises with no task, open loops, over-nudged people,
+  task load, recent facts, its own last briefs) and DMs a 3-5 point brief. Logged in `brain_insights_log`.
+
+Issues found while building (for a human to decide):
+- Team Tasks list is mostly stale (e.g. 154 of Suchita's 188 open tasks overdue, 121 of Aakash's 140).
+- The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule.
+- Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
 
 ## Phase 1 (live 7 Nov 2026)
 
