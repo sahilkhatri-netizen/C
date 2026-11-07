@@ -40,6 +40,27 @@ Issues found while building (for a human to decide):
 - The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule. Fixed 7 Nov, see below.
 - Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
 
+## Cost: target $2/day (7 Nov 2026)
+
+Findings (last 14 days, repriced): real spend ~$6.94/day, of which Sonnet 5.5 was $6.77. Everything on Haiku 5.5
+cost $0.16/day in total. Haiku 5.5 is $0.10 / $0.50 per 1M tokens vs Sonnet 5.5 $2 / $10 (about 20x).
+The ai-worker's price table logged Haiku at 10x its real price and Sonnet cache reads at half.
+
+Changes (no ai-worker redeploy):
+- `ai_model_prices` + trigger `ai_usage_price` reprice every `ai_usage` row (worker estimate kept in
+  `cost_usd_worker`); current cycle repriced, so the spend cap and reports use real numbers.
+- Moved to Haiku 5.5: `ad_report`, `pipeline_sync`, `weekly_review`, `perf_update` (agendas, eod_drafts,
+  daily_review, funnel_alert, pipeline_sync_lite were already Haiku).
+- `ioctopus` screen flipped to LITE (Haiku) by default; FULL (Sonnet) only for risky confirmations, money/record
+  changes, bot training, deep analysis/strategy, long multi-part asks. Meeting drafts, scans, SOD now LITE.
+- `lead_notes` screen: Sonnet only for new bookings without Note 1, reschedules, unclear cases; disqualified
+  (incl. clinicians) and FCB buyers now Haiku.
+- Kept on Sonnet: `note2`, `brain_learn`, `brain_insights` (~$0.25/day).
+- `ai_cost_check()` (cron `ai-cost-check`, 9:30 AM IST): DMs Sahil a per-job breakdown when yesterday was over
+  `app_config.ai_daily_target_usd` (2.0). Yesterday's cost is also in the brain brief inputs.
+
+Expected: roughly $1.5-2/day at current volume; to be confirmed on real working days after Diwali.
+
 ## Nudge clean-up (7 Nov 2026)
 
 What was actually happening (last 7 days):
