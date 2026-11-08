@@ -55,6 +55,11 @@ systems that disagree, the same item carried over in EODs, nobody reviewing.
 - Used by: `client_card` (a "⚠ STUCK" line for score 4+, so IOCtopus raises it whenever the client comes up), the
   daily brief inputs (top 8, with instructions: what was decided, what is not done, who must act, recommended next
   step) and the Sunday deep pass inputs.
+- Asana status now drives the client list: trigger `asana_client_to_index` copies Paused/Parked → paused and
+  Off Boarded/Terminated/Refunded → offboarded (and back to active when a phase resumes); 10 mismatches fixed on
+  8 Nov (Hetal, Sai Ram, Nitish were paused in Asana but active in `clients`).
+- Ops: `ops_month_plan` puts instalments of paused / terminated / parked clients, or 3+ weeks late, in `in.at_risk`
+  instead of `in.sure` (usable cash). Page change in ioc-dashboards `site/ops.html` (branch commit 18b794b).
 - First run (8 Nov): Hetal Panchal 11, Chaitali Khamar 6, Sai Ram 6, then Gopal Verma, Roshan, Neehan, Manjinder,
   Sagar, Nitish (4). Gap found: Hetal's WhatsApp group is not connected to the group reader.
 
