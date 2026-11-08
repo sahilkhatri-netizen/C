@@ -60,6 +60,12 @@ systems that disagree, the same item carried over in EODs, nobody reviewing.
   8 Nov (Hetal, Sai Ram, Nitish were paused in Asana but active in `clients`).
 - Ops: `ops_month_plan` puts instalments of paused / terminated / parked clients, or 3+ weeks late, in `in.at_risk`
   instead of `in.sure` (usable cash). Page change in ioc-dashboards `site/ops.html` (branch commit 18b794b).
+- Asana keeps status in several places, and they mean different things: the card's Status field (service: phase /
+  Paused / Due Payment / Parked / Re Offer / Refunded / Terminated / Off Boarded), the weekly review comment on the card
+  ("campaign paused" = ads stopped, not the service), the NOTES field (e.g. extensions), and the client project
+  (open delivery tasks; project status is not used). Ops at-risk now covers every Status that means "don't count
+  this money"; the stuck detector adds "ads stopped per latest weekly review" (only the latest review counts) and
+  scores it higher when the card still says an active phase.
 - First run (8 Nov): Hetal Panchal 11, Chaitali Khamar 6, Sai Ram 6, then Gopal Verma, Roshan, Neehan, Manjinder,
   Sagar, Nitish (4). Gap found: Hetal's WhatsApp group is not connected to the group reader.
 
