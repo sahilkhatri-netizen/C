@@ -40,6 +40,25 @@ Issues found while building (for a human to decide):
 - The bot contacted six people 6-11 times each on 6 Nov, above the 3-nudges-a-day rule. Fixed 7 Nov, see below.
 - Tracker vs Asana disagree for some clients (e.g. Dolly: tracker 1 sale, Asana/weekly review 0).
 
+## Answer quality fix (9 Nov 2026)
+
+Problem (from real replies, not missing data): on 9 Nov Sahil asked five times how to give 499-bundle buyers course
+access; the bot read "tg" as Telegram, said it could not search the web, gave "general guesses" with disclaimers, and
+re-listed the same notes each time. Suchita's "Client Experience Report" / "Tuesday's Report & Asana - Test Phase"
+requests were searched as literal file names. Causes: (1) the 7 Nov routing sent how-to and follow-up questions to
+Haiku; (2) web search was off for IOCtopus; (3) the answer guide pushed "never invent" without "understand and help".
+
+Changes:
+- `ai_jobs.ioctopus.web = true` (web search + fetch).
+- Screen: how-to / explain / research questions, follow-ups where the person repeats or corrects, and any question
+  from Aakash or Sahil now go to Sonnet.
+- New "HOW TO ANSWER WELL" block in `ioctopus_brief`: understand shorthand / typos / Hinglish / the team's own names
+  for things; try every tool (incl. web) before "could not find"; tool how-tos are general knowledge, give steps;
+  a repeat or correction means the last answer failed, change approach; no parroting, no repeating the thread;
+  one-fact answers are one plain line.
+- Shadow test on the same question (queue 1421): Sonnet, 2 web searches, HighLevel-sourced steps (Memberships > Offers,
+  workflow with Course Grant Offer on a tag, per-buyer routine), $0.21. Nothing was posted.
+
 ## Stuck situations detector (8 Nov 2026)
 
 Goal: spot things like Hetal's case without being told: money overdue, a decision made but not carried out,
