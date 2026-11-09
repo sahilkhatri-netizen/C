@@ -203,3 +203,23 @@ and returns those names; `ioc_numbers` holds this month / same days last month /
   Aakash's private DMs ran `slack_messages_ist where channel_id like 'D%'`; it was rewritten to the filtered view and
   neither DM appeared; the same question from Sahil still read his own DM.
 - All new functions/views: execute/select for `service_role` only.
+
+## Phase: calmer, sharper IOCtopus (9 Nov 2026) — built in test mode
+**Live now (reliability fix):** `mem_embed_query` waited up to 8 s for the embedding service, the same as the API call's
+8 s limit, so a slow embedding killed `ioctopus_brief` (98 runs in 14 days had a statement timeout; the bot then answered
+with no instructions). Now 2.5 s with keyword fallback, plus `embed_query_cache` (7 days). Re-test: 0 timeouts in 10 runs.
+
+**Quiet gate (observe mode):** `trg_outbox_gate` (before insert on slack_outbox) → `outbox_gate_decide()`; mode in
+`app_config.outbox_gate_mode` (observe | enforce | off), cap in `outbox_gate_cap` (3). Unrequested streams only (nudges,
+reports, drafts, reminders…); replies, owner work alerts (bookings, pre-call notes), payments, funnel, course and confirm
+cards are never touched. Rules: 10 AM–7 PM IST working days, not Sundays / `ioc_holidays` off days / away people; max 3 a
+day per person, the rest in one 6:30 PM digest (`outbox_gate_digest`); held messages go out when the window opens
+(`outbox_gate_release`, every 15 min); the 10:30 PM EOD reminder is stopped. Decisions in `outbox_gate_log`.
+Replay of 26 Oct–8 Nov (`outbox_gate_replay`): 239 of 432 unrequested messages change.
+
+**New instructions (candidate):** `skills_candidate` (core, slack-style, knowledge-lookup, permissions + new training,
+whatsapp) — 40k → 17k chars for the always-loaded four, contradictions removed (deletes, invoices, meetings, layout,
+questions), real column names (167 checked), ✅ reaction instead of echo replies. `ioctopus_brief` uses them when
+`meeting_task_replies.fire_note` starts with "candidate test" or `app_config.skills_candidate_live = 'true'`; rule #59
+is merged into permissions. A/B harness `zz_ab_start(case, orig_id, mode, text)` / `zz_ab_runs`.
+A/B result: echo cases 3/3 reacted with no text; fresh questions −35% cost, 44→36 steps, SQL errors 6→1, shorter replies.
