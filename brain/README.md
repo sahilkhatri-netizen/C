@@ -174,3 +174,31 @@ What changed:
 
 Rollback: `ioctopus_brief_backup_20261107` is the previous brief. To restore, recreate `ioctopus_brief` from its
 definition (rename back, including its one recursive call).
+
+## Phase: review fixes (9 Nov 2026)
+Five read-only reviews (search, truth, team, traceability, founder) found the brain mostly fails on finding the wrong
+thing, believing old facts and unclear numbers. First three fixes:
+
+**1. Facts searchable again.** 2,215 chunks (2,124 facts) were stuck with `embed_error = 'gave up after 5 tries'` since
+the 7 Nov bulk load, because 20 parallel embed calls a minute hit the edge function's compute limit (HTTP 546).
+`mem_kick` now sends 2 calls of 6 rows a minute; cron `embed-retry-daily` (every 3 h) clears give-ups so they retry.
+
+**2. One set of numbers.** `metric_definitions` (18 named numbers: meaning, source, "not to confuse with").
+`ioc_numbers_compute(from,to)` reads the dashboards (Closers page `metrics_summary`, Ads tab `ads_summary`, Ops tab)
+and returns those names; `ioc_numbers` holds this month / same days last month / last month / last 7 / prev 7
+(cron `ioc-numbers-30m`, about 40 s). `brain_snapshot_build` now quotes `ioc_numbers_line()` instead of its own sums
+(it counted GHL payments by entry date incl. pending ones: Oct 1–9 showed ₹21.35L, real ₹9.39L). Bot guide row
+`data_points.key_numbers`. Backup of the old builder: `sql/2026-11-09_brain_snapshot_build.sql` history in git.
+
+**3. Secrets and privacy.**
+- `ai_sql` blocks secret config keys and `net.http_*`; reads of `app_config` go to `app_config_public` (secrets
+  hidden). Edge functions run through `run_edge(name, body)` (sync/refresh list only; webhooks and senders refused).
+  Skills `call-tracker`, `team-lists`, `permissions` and rule 51 updated. Old function kept as `ai_sql_v1`.
+- `ai_sql(sql, commit, risky, asker)`: with an asker other than Aakash/Sahil, reads of Slack messages, memory chunks,
+  meetings, insights, replies, outbox, traces, EOD drafts and people actions go through `*_seen` views; `ioc_search`,
+  `slack_search`, `meeting_insight_get`, `slack_api` reads go through `*_seen` wrappers; `ai_queue`, shadow replies,
+  dashboard chat and WhatsApp logs are refused. Rules: public channels + channels they are in + their own bot DM;
+  meetings they attended or team meetings. Asker null (scheduled jobs) = no filter.
+- **Pending deploy:** `ai-worker/index.ts` passes `p_asker` (chat runs). Until it is deployed the asker is null, so
+  the person filter is not active yet; the secret block is.
+- All new functions/views: execute/select for `service_role` only.
