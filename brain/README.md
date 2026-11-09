@@ -199,6 +199,7 @@ and returns those names; `ioc_numbers` holds this month / same days last month /
   `slack_search`, `meeting_insight_get`, `slack_api` reads go through `*_seen` wrappers; `ai_queue`, shadow replies,
   dashboard chat and WhatsApp logs are refused. Rules: public channels + channels they are in + their own bot DM;
   meetings they attended or team meetings. Asker null (scheduled jobs) = no filter.
-- **Pending deploy:** `ai-worker/index.ts` passes `p_asker` (chat runs). Until it is deployed the asker is null, so
-  the person filter is not active yet; the secret block is.
+- `ai-worker` v23 (deployed 9 Nov) passes `p_asker` for chat runs. Shadow test: Archita asking for Sahil's and
+  Aakash's private DMs ran `slack_messages_ist where channel_id like 'D%'`; it was rewritten to the filtered view and
+  neither DM appeared; the same question from Sahil still read his own DM.
 - All new functions/views: execute/select for `service_role` only.
