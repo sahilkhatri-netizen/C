@@ -3,228 +3,237 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="A Clue detective sheet with your hand, custom cards, a turn log, automatic deductions, and a deal calculator for who gets the extra cards.">
+<meta name="description" content="A simple Clue detective notebook: a 3-step setup, then one button per turn while the sheet works out the rest.">
 <title>Clue Detective Notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,700;6..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: a case-file header with the three-slot verdict, then a tabbed notebook (sheet grid / suggestion log / table setup / cards). */
+/* Layout: guided 3-step start, then one game screen (verdict + sheet) with a single sticky "Record a turn" action; everything else lives in the menu. */
 :root{
   --bg:#eceff3; --paper:#ffffff; --ink:#18212c; --muted:#5b6876; --line:#d3d9e1; --soft:#f4f6f9;
-  --accent:#9b1c2e; --accent-ink:#ffffff;
-  --yes:#1d7a4c; --yes-bg:#dff1e7; --no:#6b7684; --no-bg:#eceff3; --maybe:#a8700f; --maybe-bg:#fbf0d9;
-  --bad:#b3261e; --bad-bg:#fbe3e1;
+  --accent:#9b1c2e; --accent-ink:#ffffff; --accent-soft:#f6e4e7;
+  --yes:#1d7a4c; --yes-bg:#dff1e7; --no:#6b7684; --no-bg:#e6eaef; --maybe:#a8700f; --maybe-bg:#fbf0d9;
+  --bad:#b3261e; --bad-bg:#fbe3e1; --scrim:rgba(15,20,26,.45);
   --f-display:"Bodoni Moda", "Didot", Georgia, serif;
   --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f141a; --paper:#171e27; --ink:#e5eaf0; --muted:#97a4b2; --line:#2a3542; --soft:#1d2530;
-  --accent:#e3566b; --accent-ink:#1a0a0d;
-  --yes:#5fd39a; --yes-bg:#173527; --no:#8693a2; --no-bg:#222b36; --maybe:#f0b54a; --maybe-bg:#3a2e14;
-  --bad:#ff8a80; --bad-bg:#3d1c1a; color-scheme:dark }}
+  --accent:#e3566b; --accent-ink:#1a0a0d; --accent-soft:#3a1c22;
+  --yes:#5fd39a; --yes-bg:#173527; --no:#8693a2; --no-bg:#232c37; --maybe:#f0b54a; --maybe-bg:#3a2e14;
+  --bad:#ff8a80; --bad-bg:#3d1c1a; --scrim:rgba(0,0,0,.6); color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#0f141a; --paper:#171e27; --ink:#e5eaf0; --muted:#97a4b2; --line:#2a3542; --soft:#1d2530;
-  --accent:#e3566b; --accent-ink:#1a0a0d;
-  --yes:#5fd39a; --yes-bg:#173527; --no:#8693a2; --no-bg:#222b36; --maybe:#f0b54a; --maybe-bg:#3a2e14;
-  --bad:#ff8a80; --bad-bg:#3d1c1a; color-scheme:dark }
+  --accent:#e3566b; --accent-ink:#1a0a0d; --accent-soft:#3a1c22;
+  --yes:#5fd39a; --yes-bg:#173527; --no:#8693a2; --no-bg:#232c37; --maybe:#f0b54a; --maybe-bg:#3a2e14;
+  --bad:#ff8a80; --bad-bg:#3d1c1a; --scrim:rgba(0,0,0,.6); color-scheme:dark }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
-.wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
+button:disabled{cursor:default}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
-h2{font-size:17px;margin:0;font-weight:600}
-.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.wrap{max-width:900px;margin:0 auto;padding-block:16px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.wrap.nobar{padding-block-end:40px}
+h1{font-family:var(--f-display);font-weight:800;margin:0;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:22px;margin:0;font-weight:600;text-wrap:balance}
+h3{font-size:15px;margin:0;font-weight:600}
+p{margin:0}
 .muted{color:var(--muted)}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-
-/* header */
-.top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
-.top .stamp{color:var(--accent)}
-.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.slot{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px;min-width:0}
-.slot.solved{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.slot .val{font-family:var(--f-display);font-weight:600;font-size:20px;line-height:1.15;overflow-wrap:anywhere}
-.slot.solved .val{color:var(--accent)}
-.slot .sub{font-size:12px;color:var(--muted)}
-
-/* tabs */
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
-.tab{background:none;border:0;padding:10px 14px;border-bottom:2px solid transparent;color:var(--muted);font-weight:500;white-space:nowrap}
-.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-.tab .count{font-family:var(--f-mono);font-size:12px;margin-left:4px;color:var(--muted)}
-
-.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:14px;min-width:0}
+.small{font-size:14px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.stack{display:grid;gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .spread{justify-content:space-between}
-.btn{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:7px 12px;font-weight:500}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ghost{background:none}
-.btn.small{padding:4px 9px;font-size:13px}
-.btn.danger{color:var(--bad)}
-.iconbtn{border:1px solid var(--line);background:none;border-radius:6px;width:30px;height:30px;display:inline-grid;place-items:center;color:var(--muted)}
-.iconbtn:hover{color:var(--ink);border-color:var(--muted)}
-.iconbtn:disabled{opacity:.35;cursor:default}
-input[type=text],select,textarea{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
-textarea{width:100%;min-height:90px;resize:vertical}
-label.chk{display:inline-flex;gap:6px;align-items:center;font-size:14px}
 
-/* sheet grid */
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted);align-items:center}
-.legend .mk{width:22px;height:22px;font-size:13px}
-.gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-table.sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:16px;min-width:0}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 16px;font-weight:600;min-height:44px}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:disabled{opacity:.4}
+.btn.wide{flex:1}
+.link{background:none;border:0;padding:4px 0;color:var(--accent);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.link.plain{color:var(--muted)}
+
+/* chips used for every choice */
+.picks{display:flex;flex-wrap:wrap;gap:8px}
+.pick{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;min-height:40px;display:inline-flex;align-items:center;gap:7px;font-weight:500}
+.pick:hover:not(:disabled){border-color:var(--muted)}
+.pick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pick:disabled{opacity:.4}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.18)}
+.count{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* wizard */
+.wiz{max-width:620px;width:100%;margin:0 auto;display:grid;gap:18px}
+.hero{display:grid;gap:6px;padding-top:8px}
+.hero h1{font-size:clamp(32px,7vw,44px)}
+.steps{display:flex;gap:6px}
+.steps span{height:4px;flex:1;border-radius:4px;background:var(--line)}
+.steps span.on{background:var(--accent)}
+.num{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.num .pick{justify-content:center;font-size:18px;font-family:var(--f-mono)}
+.names{display:grid;gap:8px}
+.nrow{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center}
+.nrow .seat{font-family:var(--f-mono);color:var(--muted);text-align:center;font-size:14px}
+input[type=text],textarea,select{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.hint{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--muted)}
+.hint b{color:var(--ink)}
+.alert{background:var(--bad-bg);color:var(--bad);border-radius:10px;padding:10px 14px;font-size:14px}
+.group{display:grid;gap:8px}
+.group>.lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* game header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
+.top h1{font-size:24px}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:6px;display:grid;min-width:230px;z-index:30}
+.menu button{background:none;border:0;text-align:left;padding:11px 12px;border-radius:8px;font-weight:500;display:flex;justify-content:space-between;gap:10px}
+.menu button:hover{background:var(--soft)}
+.menu .danger{color:var(--bad)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+.verdict{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.slot{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.slot .q{font-size:12px;color:var(--muted);font-weight:600}
+.slot .v{font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1.15;overflow-wrap:anywhere}
+.slot .s{font-size:12px;color:var(--muted)}
+.slot.solved{border-color:var(--accent);background:var(--accent-soft)}
+.slot.solved .v{color:var(--accent)}
+
+.tip{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.tip ol{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px}
+
+/* sheet */
+.gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+table.sheet{border-collapse:separate;border-spacing:0;width:100%}
 .sheet th,.sheet td{border-bottom:1px solid var(--line);padding:0}
-.sheet thead th{position:sticky;top:0;background:var(--soft);font-weight:600;font-size:12px;padding:8px 6px;text-align:center;vertical-align:bottom;z-index:2}
-.sheet thead th.namecol{text-align:left;padding-left:12px}
-.sheet .namecol{position:sticky;left:0;background:var(--paper);z-index:1;min-width:150px;max-width:190px}
-.sheet thead .namecol{z-index:3;background:var(--soft)}
-.sheet .cat td{background:var(--soft);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--muted);padding:6px 12px}
-.sheet .cat td.namecol{background:var(--soft)}
-.cardname{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;font-weight:500}
-.dot{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.15)}
-tr.cleared .cardname .nm{text-decoration:line-through;color:var(--muted);text-decoration-color:var(--muted)}
+.sheet tr:last-child>*{border-bottom:0}
+.sheet thead th{background:var(--soft);font-weight:600;font-size:12px;padding:8px 4px;text-align:center;vertical-align:bottom}
+.sheet .namecol{position:sticky;left:0;background:var(--paper);z-index:1;text-align:left;min-width:128px}
+.sheet thead .namecol{background:var(--soft);z-index:2;padding-left:12px}
+.sheet .cat td{background:var(--soft);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--muted);padding:6px 12px}
+.cardname{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;font-weight:500;font-size:15px}
+tr.cleared .nm{text-decoration:line-through;color:var(--muted)}
 tr.solution .namecol{box-shadow:inset 4px 0 0 var(--accent)}
-tr.solution .cardname .nm{color:var(--accent);font-weight:600}
-.tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;padding:1px 5px;font-weight:600;white-space:nowrap}
-.tag.up{background:var(--no-bg);color:var(--muted)}
-.tag.sol{background:var(--accent);color:var(--accent-ink)}
-.ph{display:grid;gap:2px;justify-items:center;min-width:64px}
-.ph .pn{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--ink)}
+tr.solution .nm{color:var(--accent);font-weight:700}
+.ph{display:grid;justify-items:center;gap:1px;min-width:50px}
+.ph .pn{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--ink)}
+.ph .pn.me{color:var(--accent)}
 .ph .meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500}
-.ph .me{color:var(--accent)}
-.badge{font-size:10px;border-radius:999px;padding:0 6px;background:var(--maybe-bg);color:var(--maybe);font-weight:600}
-td.cell{text-align:center;padding:3px}
-td.envcell{border-left:1px dashed var(--line)}
-.mk{width:38px;height:32px;border-radius:7px;border:1px solid transparent;background:none;display:inline-grid;place-items:center;font-weight:700;font-size:16px;line-height:1}
+td.cell{text-align:center;padding:3px 2px}
+td.env{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.mk{width:40px;height:34px;border-radius:8px;border:1px solid transparent;background:none;display:inline-grid;place-items:center;font-weight:700;font-size:16px;line-height:1}
 .mk:hover{border-color:var(--line)}
 .mk.y{background:var(--yes-bg);color:var(--yes)}
 .mk.n{background:var(--no-bg);color:var(--no)}
 .mk.m{background:var(--maybe-bg);color:var(--maybe)}
-.mk.auto{background:none;border:1px dashed currentColor;opacity:.85;font-weight:600}
-.mk.conflict{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
-.alert{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:10px 12px;font-size:14px}
-.note{background:var(--soft);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--muted)}
-.note b{color:var(--ink)}
+.mk.auto{background:none;border:1.5px dashed currentColor}
+.mk.conflict{background:var(--bad-bg);color:var(--bad);border:1.5px solid var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .mk{width:24px;height:22px;font-size:12px}
+@media (max-width:520px){.sheet .namecol{min-width:104px}.cardname{font-size:13px;padding-left:8px;gap:6px}.mk{width:32px;height:32px}.ph{min-width:38px}.ph .pn{max-width:46px;font-size:12px}.ph .meta{font-size:10px}td.cell{padding:3px 1px}.slot .v{font-size:16px}}
 
-/* suggestion log */
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
-.field{display:grid;gap:4px;min-width:0}
-.field>span{font-size:12px;color:var(--muted);font-weight:500}
-.log{display:grid;gap:8px;list-style:none;margin:0;padding:0}
-.log li{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.log .txt{min-width:0;display:grid;gap:3px}
-.log .num{font-family:var(--f-mono);color:var(--muted);font-size:12px}
-.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:13px;margin:1px 2px 1px 0}
-.chip.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
-button.chip{background:none}
+/* sticky bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);z-index:20;padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar .in{max-width:900px;margin:0 auto;display:flex;gap:10px}
 
-/* setup */
-.players{display:grid;gap:8px}
-.prow{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto auto;gap:8px;align-items:center}
-.prow .seat{font-family:var(--f-mono);color:var(--muted);font-size:13px;text-align:center}
-.prow input[type=text]{width:100%}
-.prow .opts{display:flex;gap:10px;font-size:13px}
-.prow .moves{display:flex;gap:4px}
-@media (max-width:560px){.prow{grid-template-columns:24px minmax(0,1fr) auto}.prow .opts{grid-column:2/4;order:5}}
-.deal{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-.dcard{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:2px;min-width:0}
-.dcard .n{font-weight:600;overflow-wrap:anywhere}
-.dcard.extra{border-color:var(--maybe);background:var(--maybe-bg)}
-table.ref{border-collapse:collapse;font-size:13px}
-table.ref th,table.ref td{border-bottom:1px solid var(--line);padding:5px 10px;text-align:left}
-table.ref td{font-family:var(--f-mono)}
-table.ref tr.cur td{color:var(--accent);font-weight:600}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:none;padding:7px 12px;font-size:14px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+/* turn dialog */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.dialog{background:var(--paper);width:100%;max-width:600px;max-height:92%;border-radius:18px 18px 0 0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+@media (min-width:700px){.scrim{align-items:center}.dialog{border-radius:18px;max-height:88%}}
+.dhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.dbody{overflow-y:auto;padding:16px 18px;display:grid;gap:22px;align-content:start}
+.dfoot{padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.qn{display:grid;gap:10px}
+.qn>h3 .sub{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:none;padding:8px 12px;font-size:14px;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.resp{display:grid;grid-template-columns:minmax(80px,auto) 1fr;gap:8px 12px;align-items:center}
+.resp .who{font-weight:600;overflow-wrap:anywhere}
+.x{border:0;background:none;width:40px;height:40px;border-radius:10px;font-size:20px;color:var(--muted)}
+.x:hover{background:var(--soft);color:var(--ink)}
 
-/* cards editor */
-.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.catbox{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;align-content:start;min-width:0}
+/* history */
+.log{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.log li{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;background:var(--paper)}
+.log .t{display:grid;gap:4px;min-width:0}
+.tagc{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;font-size:13px;margin:2px 3px 2px 0}
+.tagc.on{border-color:var(--accent);color:var(--accent)}
+
+/* settings + cards */
 .crow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
-.crow input[type=text]{width:100%}
-.crow input[type=color]{width:26px;height:26px;border:1px solid var(--line);border-radius:50%;padding:0;background:none;overflow:hidden}
+.crow input[type=color]{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;padding:0;background:none;overflow:hidden}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.catbox{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;align-content:start;min-width:0}
 .addrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
-.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:8px 10px;font-size:14px}
-footer{font-size:12px;color:var(--muted)}
-footer a{color:inherit}
-@media (prefers-reduced-motion:no-preference){.mk{transition:background .12s,color .12s}}
-@media (max-width:560px){.sheet .namecol{min-width:118px;max-width:140px}.cardname{font-size:14px;padding-left:8px}.mk{width:32px}}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:12px 14px;font-size:14px}
+table.ref{border-collapse:collapse;font-size:14px}
+table.ref th,table.ref td{border-bottom:1px solid var(--line);padding:6px 12px;text-align:left}
+table.ref td{font-family:var(--f-mono)}
+label.chk{display:flex;gap:10px;align-items:center}
+label.chk input{width:20px;height:20px;accent-color:var(--accent)}
+footer{font-size:12px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:no-preference){.mk,.pick{transition:background .12s,color .12s,border-color .12s}}
 </style>
-<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="eyebrow stamp">Case file · confidential</div>
-      <h1>Clue Detective Notebook</h1>
-    </div>
-    <div class="row">
-      <button class="btn ghost" id="undo" type="button">Undo</button>
-      <button class="btn ghost danger" id="newgame" type="button">New game</button>
-    </div>
-  </header>
-  <div id="confirmbar"></div>
-  <section class="verdict" id="verdict" aria-label="Solution so far"></section>
-  <nav class="tabs" role="tablist" id="tabs"></nav>
-  <main id="main"></main>
-  <footer>Card lists from the Clue 2016–2022 edition (Dr. Orchid replaced Mrs. White in 2016) and the classic edition. Deal rules follow the standard game: one card per category goes in the case file, the rest are dealt clockwise from the dealer's left. Not affiliated with Hasbro. Saved in this browser only.</footer>
-</div>
+<div id="app"></div>
 
 <script>
 (function(){
-const KEY='clue-notebook-v2';
+const KEY='clue-notebook-v3';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const PRESETS={
   'clue-2016':{label:'Clue 2016–2022 (Dr. Orchid)',cats:[
-    {name:'Suspects',short:'Who',cards:[['Col. Mustard','#d4a017'],['Dr. Orchid','#d26fc7'],['Prof. Plum','#7b3f8c'],['Mr. Green','#2e7d4f'],['Mrs. Peacock','#1f6fa8'],['Miss Scarlett','#c62828']]},
-    {name:'Weapons',short:'What',cards:['Dagger','Candlestick','Revolver','Rope','Lead Pipe','Wrench']},
-    {name:'Rooms',short:'Where',cards:['Dining Room','Kitchen','Conservatory','Billiard Room','Library','Lounge','Hall','Ballroom','Study']}]},
+    {name:'Suspects',q:'Who?',cards:[['Col. Mustard','#d4a017'],['Dr. Orchid','#d26fc7'],['Prof. Plum','#7b3f8c'],['Mr. Green','#2e7d4f'],['Mrs. Peacock','#1f6fa8'],['Miss Scarlett','#c62828']]},
+    {name:'Weapons',q:'With what?',cards:['Dagger','Candlestick','Revolver','Rope','Lead Pipe','Wrench']},
+    {name:'Rooms',q:'Where?',cards:['Dining Room','Kitchen','Conservatory','Billiard Room','Library','Lounge','Hall','Ballroom','Study']}]},
   'clue-classic':{label:'Classic Clue (Mrs. White)',cats:[
-    {name:'Suspects',short:'Who',cards:[['Col. Mustard','#d4a017'],['Mrs. White','#c9ced4'],['Prof. Plum','#7b3f8c'],['Mr. Green','#2e7d4f'],['Mrs. Peacock','#1f6fa8'],['Miss Scarlett','#c62828']]},
-    {name:'Weapons',short:'What',cards:['Candlestick','Knife','Lead Pipe','Revolver','Rope','Wrench']},
-    {name:'Rooms',short:'Where',cards:['Hall','Lounge','Dining Room','Kitchen','Ballroom','Conservatory','Billiard Room','Library','Study']}]},
-  'blank':{label:'Blank deck (build your own)',cats:[
-    {name:'Suspects',short:'Who',cards:[]},{name:'Weapons',short:'What',cards:[]},{name:'Rooms',short:'Where',cards:[]}]}
+    {name:'Suspects',q:'Who?',cards:[['Col. Mustard','#d4a017'],['Mrs. White','#c9ced4'],['Prof. Plum','#7b3f8c'],['Mr. Green','#2e7d4f'],['Mrs. Peacock','#1f6fa8'],['Miss Scarlett','#c62828']]},
+    {name:'Weapons',q:'With what?',cards:['Candlestick','Knife','Lead Pipe','Revolver','Rope','Wrench']},
+    {name:'Rooms',q:'Where?',cards:['Hall','Lounge','Dining Room','Kitchen','Ballroom','Conservatory','Billiard Room','Library','Study']}]},
+  'blank':{label:'Empty deck (make your own)',cats:[
+    {name:'Suspects',q:'Who?',cards:[]},{name:'Weapons',q:'With what?',cards:[]},{name:'Rooms',q:'Where?',cards:[]}]}
 };
-function buildCats(key){
-  return PRESETS[key].cats.map(c=>({id:uid(),name:c.name,short:c.short,cards:c.cards.map(x=>Array.isArray(x)?{id:uid(),name:x[0],color:x[1]}:{id:uid(),name:x})}));
-}
-function freshState(prev){
-  const players=prev?prev.players:[{id:uid(),name:'You'},{id:uid(),name:'Alex'},{id:uid(),name:'Sam'},{id:uid(),name:'Priya'}];
-  return {preset:prev?prev.preset:'clue-2016',categories:prev?prev.categories:buildCats('clue-2016'),players,
-    me:prev?prev.me:players[0].id,dealer:prev?prev.dealer:players[players.length-1].id,leftover:prev?prev.leftover:'deal',
-    faceup:[],marks:{},log:[],notes:'',auto:prev?prev.auto:true,tab:prev?'setup':'sheet',
-    hand:[],extras:null,rule:prev?prev.rule||'first':'first',draft:null};
+const buildCats=k=>PRESETS[k].cats.map(c=>({id:uid(),name:c.name,q:c.q,cards:c.cards.map(x=>Array.isArray(x)?{id:uid(),name:x[0],color:x[1]}:{id:uid(),name:x})}));
+
+function freshGame(prev){
+  const players=prev?prev.players:[{id:uid(),name:''},{id:uid(),name:''},{id:uid(),name:''},{id:uid(),name:''}];
+  return {started:false,step:1,view:'game',categories:prev?prev.categories:buildCats('clue-2016'),players,me:players[0].id,
+    extras:prev?prev.extras:[],leftover:prev?prev.leftover:'deal',faceup:[],hand:[],marks:{},log:[],notes:'',
+    auto:true,rule:prev?prev.rule:'first',tip:true,draft:null,modal:false,menu:false,confirm:null,pendingPreset:null};
 }
 let state; try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!state||!state.categories) state=freshState();
-let history=[]; let confirming=null;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-function commit(fn){history.push(JSON.stringify(state)); if(history.length>80)history.shift(); fn(); save(); render();}
+if(!state||!state.categories||!state.players) state=freshGame();
+let history=[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+function commit(fn){history.push(JSON.stringify(state)); if(history.length>100)history.shift(); fn(); save(); render();}
+function ui(fn){fn(); save(); render();}
 
 const allCards=()=>state.categories.flatMap(c=>c.cards.map(k=>({...k,cat:c.id})));
 const cardById=id=>allCards().find(c=>c.id===id);
 const pIdx=id=>state.players.findIndex(p=>p.id===id);
-const pName=id=>id==='env'?'Case file':(state.players.find(p=>p.id===id)||{}).name||'?';
+const pName=id=>{if(id==='env')return 'Envelope'; const i=pIdx(id); if(i<0)return '?'; const p=state.players[i]; return p.name.trim()||(p.id===state.me?'You':'Player '+(i+1));};
+const cats=()=>state.categories.filter(c=>c.cards.length);
+const dot=c=>c&&c.color?`<span class="dot" style="background:${esc(c.color)}"></span>`:'';
 
-/* ---------- deal math ---------- */
+/* ---------- deal ---------- */
 function dealInfo(){
-  const total=allCards().length, envN=state.categories.filter(c=>c.cards.length).length;
-  const n=state.players.length, dealtAll=Math.max(0,total-envN);
-  const base=Math.floor(dealtAll/n), rem=dealtAll%n;
-  let di=pIdx(state.dealer); if(di<0)di=n-1;
-  const sizes={}, extra={}; const manual=state.leftover==='deal'&&Array.isArray(state.extras);
-  state.players.forEach((p,i)=>{const pos=(i-(di+1)+n*2)%n; const ex=state.leftover==='deal'&&(manual?state.extras.includes(p.id):pos<rem); sizes[p.id]=base+(ex?1:0); extra[p.id]=ex;});
-  const extraCount=Object.values(extra).filter(Boolean).length;
-  return {total,envN,dealtAll,base,rem,sizes,extra,n,manual,extraCount,faceupExpected:state.leftover==='faceup'?rem:0};
+  const n=state.players.length, envN=cats().length, total=allCards().length;
+  const dealtAll=Math.max(0,total-envN), base=Math.floor(dealtAll/n), rem=dealtAll%n;
+  const ex=(state.extras||[]).filter(id=>pIdx(id)>=0);
+  const sizes={}, extra={};
+  state.players.forEach(p=>{const e=state.leftover==='deal'&&ex.includes(p.id); extra[p.id]=e; sizes[p.id]=base+(e?1:0);});
+  const known=rem===0||(state.leftover==='deal'?ex.length===rem:state.faceup.length===rem);
+  return {n,envN,total,dealtAll,base,rem,sizes,extra,known,exCount:ex.length};
 }
 
 /* ---------- deduction ---------- */
@@ -233,47 +242,46 @@ function solve(){
   const cards=allCards(); const K={}; cards.forEach(c=>K[c.id]={});
   const conflicts=new Set(); const D=dealInfo(); let changed=true;
   const set=(cid,o,v)=>{if(!K[cid])return; const cur=K[cid][o]; if(cur===v)return; if(cur){conflicts.add(cid+'|'+o);return;} K[cid][o]=v; changed=true;};
-  const facts=[]; // [cid,owner,val]
-  for(const cid in state.marks) for(const o in state.marks[cid]){const v=state.marks[cid][o]; if(v==='y'||v==='n') facts.push([cid,o,v]);}
+  const facts=[];
+  for(const cid in state.marks) for(const o in state.marks[cid]){const v=state.marks[cid][o]; if(v==='y'||v==='n')facts.push([cid,o,v]);}
   state.faceup.forEach(cid=>owners.forEach(o=>facts.push([cid,o,'n'])));
-  if(state.hand&&state.hand.length&&pIdx(state.me)>=0) cards.forEach(c=>facts.push([c.id,state.me,state.hand.includes(c.id)?'y':'n']));
-  const n=state.players.length; const constraints=[]; const envClauses=[];
+  if(state.hand.length) cards.forEach(c=>facts.push([c.id,state.me,state.hand.includes(c.id)?'y':'n']));
+  const n=state.players.length, constraints=[], envClauses=[];
   state.log.forEach(e=>{
     const ids=e.cards.filter(id=>K[id]);
-    if(e.type==='accuse'){if(ids.length)envClauses.push(ids); return;}
+    if(e.type==='accuse'){if(ids.length)envClauses.push(ids);return;}
     const s=pIdx(e.by); if(s<0)return;
     if(e.responses){
       for(const pid in e.responses){const r=e.responses[pid]; if(pIdx(pid)<0)continue;
-        if(r==='none') ids.forEach(cid=>facts.push([cid,pid,'n']));
-        else if(r==='some') constraints.push([pid,ids]);
-        else if(K[r]) facts.push([r,pid,'y']);}
+        if(r==='none')ids.forEach(cid=>facts.push([cid,pid,'n']));
+        else if(r==='some')constraints.push([pid,ids]);
+        else if(K[r])facts.push([r,pid,'y']);}
       return;
     }
-    const passers=[]; const w=e.shower?pIdx(e.shower):-1;
-    for(let i=(s+1)%n;i!==s&&i!==w;i=(i+1)%n) passers.push(state.players[i].id);
-    passers.forEach(pid=>ids.forEach(cid=>facts.push([cid,pid,'n'])));
-    if(e.shower&&w>=0){ if(e.shown) facts.push([e.shown,e.shower,'y']); else constraints.push([e.shower,ids]); }
+    const w=e.shower?pIdx(e.shower):-1;
+    for(let i=(s+1)%n;i!==s&&i!==w;i=(i+1)%n) ids.forEach(cid=>facts.push([cid,state.players[i].id,'n']));
+    if(w>=0){if(e.shown&&K[e.shown])facts.push([e.shown,e.shower,'y']); else constraints.push([e.shower,ids]);}
   });
   let guard=0;
-  while(changed&&guard++<60){
+  while(changed&&guard++<80){
     changed=false;
     facts.forEach(f=>set(f[0],f[1],f[2]));
-    if(!state.auto) break;
+    if(!state.auto)break;
     cards.forEach(c=>{const k=K[c.id];
-      const yes=owners.filter(o=>k[o]==='y'); if(yes.length) owners.forEach(o=>{if(o!==yes[0])set(c.id,o,'n')});
-      const open=owners.filter(o=>k[o]!=='n'); if(open.length===1&&!k[open[0]]) set(c.id,open[0],'y');
+      const yes=owners.filter(o=>k[o]==='y'); if(yes.length)owners.forEach(o=>{if(o!==yes[0])set(c.id,o,'n')});
+      const open=owners.filter(o=>k[o]!=='n'); if(open.length===1&&!k[open[0]])set(c.id,open[0],'y');
     });
-    state.categories.forEach(cat=>{if(!cat.cards.length)return;
-      const inEnv=cat.cards.filter(c=>K[c.id].env==='y'); if(inEnv.length) cat.cards.forEach(c=>{if(c.id!==inEnv[0].id)set(c.id,'env','n')});
-      const open=cat.cards.filter(c=>K[c.id].env!=='n'); if(open.length===1) set(open[0].id,'env','y');
+    cats().forEach(cat=>{
+      const inEnv=cat.cards.filter(c=>K[c.id].env==='y'); if(inEnv.length)cat.cards.forEach(c=>{if(c.id!==inEnv[0].id)set(c.id,'env','n')});
+      const open=cat.cards.filter(c=>K[c.id].env!=='n'); if(open.length===1)set(open[0].id,'env','y');
     });
-    state.players.forEach(p=>{const h=D.sizes[p.id];
+    if(D.known) state.players.forEach(p=>{const h=D.sizes[p.id];
       const yes=cards.filter(c=>K[c.id][p.id]==='y'), open=cards.filter(c=>K[c.id][p.id]!=='n');
-      if(yes.length===h) cards.forEach(c=>{if(K[c.id][p.id]!=='y')set(c.id,p.id,'n')});
-      else if(open.length===h) open.forEach(c=>set(c.id,p.id,'y'));
+      if(yes.length===h)cards.forEach(c=>{if(K[c.id][p.id]!=='y')set(c.id,p.id,'n')});
+      else if(open.length===h)open.forEach(c=>set(c.id,p.id,'y'));
     });
-    constraints.forEach(([pid,ids])=>{const open=ids.filter(id=>K[id]&&K[id][pid]!=='n'); if(open.length===1) set(open[0],pid,'y');});
-    envClauses.forEach(ids=>{const yes=ids.filter(id=>K[id].env==='y'), unk=ids.filter(id=>!K[id].env); if(yes.length===ids.length-1&&unk.length===1) set(unk[0],'env','n');});
+    constraints.forEach(([pid,ids])=>{const open=ids.filter(id=>K[id][pid]!=='n'); if(open.length===1)set(open[0],pid,'y');});
+    envClauses.forEach(ids=>{const yes=ids.filter(id=>K[id].env==='y'),unk=ids.filter(id=>!K[id].env); if(yes.length===ids.length-1&&unk.length===1)set(unk[0],'env','n');});
   }
   const maybe=new Set();
   constraints.forEach(([pid,ids])=>{
@@ -281,246 +289,280 @@ function solve(){
     if(ids.length&&ids.every(id=>K[id][pid]==='n')){ids.forEach(id=>conflicts.add(id+'|'+pid));return;}
     ids.forEach(id=>{if(!K[id][pid])maybe.add(id+'|'+pid)});
   });
-  envClauses.forEach(ids=>{if(ids.every(id=>K[id].env==='y'))ids.forEach(id=>conflicts.add(id+'|env'));});
   return {K,conflicts,maybe};
 }
 
-/* ---------- rendering ---------- */
-const TABS=[['sheet','Sheet'],['log','Suggestions'],['setup','Players & deal'],['cards','Cards']];
-const GLYPH={y:'✓',n:'✕',m:'?'};
+/* ---------- views ---------- */
+const app=document.getElementById('app');
 function render(){
-  const S=solve(); const D=dealInfo();
-  // verdict
-  document.getElementById('verdict').innerHTML=state.categories.filter(c=>c.cards.length).map(cat=>{
-    const sol=cat.cards.find(c=>S.K[c.id].env==='y'); const open=cat.cards.filter(c=>S.K[c.id].env!=='n');
-    return `<div class="slot ${sol?'solved':''}"><div class="eyebrow">${esc(cat.short||cat.name)}</div>
-      <div class="val">${sol?esc(sol.name):'Unknown'}</div>
-      <div class="sub">${sol?'Solved':`${open.length} of ${cat.cards.length} ${esc(cat.name.toLowerCase())} still possible`}</div></div>`}).join('');
-  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${state.tab===k}">${l}${k==='log'&&state.log.length?`<span class="count">${state.log.length}</span>`:''}</button>`).join('');
-  document.getElementById('undo').disabled=!history.length;
-  document.getElementById('confirmbar').innerHTML=confirming==='new'?`<div class="confirm">Clear every mark, suggestion and note? Players and cards stay. <button class="btn small" data-act="confirm-new" type="button">Clear sheet</button><button class="btn small ghost" data-act="cancel" type="button">Keep playing</button></div>`:'';
-  const m=document.getElementById('main');
-  m.innerHTML=({sheet:renderSheet,log:renderLog,setup:renderSetup,cards:renderCards})[state.tab](S,D);
+  const dlg=app.querySelector('.dbody'); const dScroll=dlg?dlg.scrollTop:0;
+  const S=solve(), D=dealInfo();
+  let html;
+  if(!state.started) html=`<div class="wrap nobar">${wizard(D)}</div>`;
+  else {
+    const v=state.view;
+    const body=v==='history'?historyView():v==='settings'?settingsView(D):v==='cards'?cardsView():v==='help'?helpView(D):gameView(S,D);
+    html=`<div class="wrap ${v==='game'||v==='history'?'':'nobar'}">${header()}${state.confirm==='new'?confirmNew():''}${body}<footer>Saved on this device only · Not affiliated with Hasbro</footer></div>`;
+    if(v==='game'||v==='history') html+=`<div class="bar"><div class="in"><button class="btn" type="button" data-a="undo" ${history.length?'':'disabled'}>Undo</button><button class="btn primary wide" type="button" data-a="openturn">+ Record a turn</button></div></div>`;
+    if(state.modal) html+=turnDialog();
+  }
+  if(!state.started&&state.view==='cards') html=`<div class="wrap nobar">${cardsView()}</div>`;
+  app.innerHTML=html;
+  const nd=app.querySelector('.dbody'); if(nd)nd.scrollTop=dScroll;
 }
 
-function renderSheet(S,D){
+/* ----- guided start ----- */
+function wizard(D){
+  const steps=[1,2,3].map(i=>`<span class="${state.step>=i?'on':''}"></span>`).join('');
+  const head=`<div class="hero"><span class="eyebrow">Clue detective notebook</span><h1>${state.step===1?'Let’s set up your game':state.step===2?'Who got an extra card?':'Which cards do you have?'}</h1></div><div class="steps" aria-label="Step ${state.step} of 3">${steps}</div>`;
+  if(state.step===1){
+    const n=state.players.length;
+    return `<div class="wiz">${head}
+      <div class="card">
+        <div class="qn"><h3>How many people are playing?</h3>
+          <div class="num">${[3,4,5,6].map(k=>`<button type="button" class="pick ${k===n?'on':''}" data-a="count" data-v="${k}" aria-pressed="${k===n}">${k}</button>`).join('')}</div></div>
+        <div class="qn"><h3>Their names <span class="muted small" style="font-weight:400">— start with you, then go clockwise</span></h3>
+          <div class="names">${state.players.map((p,i)=>`<div class="nrow"><span class="seat">${i===0?'You':i+1}</span><input type="text" id="name-${p.id}" data-name="${p.id}" value="${esc(p.name)}" placeholder="${i===0?'Your name':'Player '+(i+1)}" autocomplete="off"></div>`).join('')}</div></div>
+        <div class="row spread"><button class="link plain" type="button" data-a="wizcards">Different edition or your own cards?</button>
+          <button class="btn primary" type="button" data-a="next">Next</button></div>
+      </div>
+      <p class="muted small" style="text-align:center">Using the ${esc(deckLabel())} deck: ${allCards().length} cards.</p></div>`;
+  }
+  if(state.step===2){
+    const faceup=state.leftover==='faceup';
+    const ok=faceup?state.faceup.length===D.rem:D.exCount===D.rem;
+    return `<div class="wiz">${head}<div class="card">
+      <p>${D.dealtAll} cards get dealt (one ${cats().map(c=>c.name.toLowerCase().replace(/s$/,'')).join(', one ')} go in the envelope). That doesn’t split evenly between ${D.n} players, so <b>${D.rem} player${D.rem>1?'s':''}</b> got ${D.base+1} cards and the rest got ${D.base}.</p>
+      ${faceup?`<div class="qn"><h3>Tap the ${D.rem} card${D.rem>1?'s':''} placed face up <span class="sub">${state.faceup.length} of ${D.rem}</span></h3>
+          <div class="picks">${allCards().map(c=>`<button type="button" class="pick ${state.faceup.includes(c.id)?'on':''}" data-a="faceup" data-v="${c.id}" aria-pressed="${state.faceup.includes(c.id)}">${dot(c)}${esc(c.name)}</button>`).join('')}</div></div>
+          <button class="link" type="button" data-a="leftover" data-v="deal">No, some players got an extra card</button>`
+        :`<div class="qn"><h3>Tap the ${D.rem} player${D.rem>1?'s':''} who got ${D.base+1} cards <span class="sub">${D.exCount} of ${D.rem}</span></h3>
+          <div class="picks">${state.players.map(p=>`<button type="button" class="pick ${D.extra[p.id]?'on':''}" data-a="extra" data-v="${p.id}" aria-pressed="${D.extra[p.id]}">${esc(pName(p.id))}</button>`).join('')}</div>
+          <p class="muted small">Not sure? The extra cards go to the players just after the dealer, going clockwise.</p></div>
+          <button class="link plain" type="button" data-a="leftover" data-v="faceup">We put the leftover cards face up instead</button>`}
+      <div class="row spread"><button class="btn" type="button" data-a="back">Back</button><button class="btn primary" type="button" data-a="next" ${ok?'':'disabled'}>Next</button></div>
+    </div></div>`;
+  }
+  const h=D.sizes[state.me]; const hand=state.hand;
+  const full=cats().find(c=>c.cards.every(k=>hand.includes(k.id)));
+  return `<div class="wiz">${head}<div class="card">
+    <h3>Tap the ${h} cards in your hand <span class="count muted" style="font-weight:400">· ${hand.length} of ${h}</span></h3>
+    ${cats().map(cat=>`<div class="group"><span class="lab">${esc(cat.name)}</span><div class="picks">${cat.cards.filter(c=>!state.faceup.includes(c.id)).map(c=>`<button type="button" class="pick ${hand.includes(c.id)?'on':''}" data-a="hand" data-v="${c.id}" aria-pressed="${hand.includes(c.id)}" ${!hand.includes(c.id)&&hand.length>=h?'disabled':''}>${dot(c)}${esc(c.name)}</button>`).join('')}</div></div>`).join('')}
+    ${full?`<div class="alert">You can’t have every card in ${esc(full.name)}: one of them is in the envelope.</div>`:''}
+    <div class="row spread"><button class="btn" type="button" data-a="back">Back</button>
+      <div class="row"><button class="link plain" type="button" data-a="start">Skip for now</button><button class="btn primary" type="button" data-a="start" ${hand.length===h&&!full?'':'disabled'}>Start game</button></div></div>
+  </div></div>`;
+}
+function deckLabel(){const names=allCards().map(c=>c.name); if(names.includes('Dr. Orchid'))return 'Clue 2016–2022'; if(names.includes('Mrs. White'))return 'classic Clue'; return 'custom';}
+
+/* ----- game ----- */
+function header(){
+  const back=state.view!=='game';
+  return `<header class="top">${back?`<button class="btn" type="button" data-a="view" data-v="game">← Back to sheet</button>`:`<h1>Clue Notebook</h1>`}
+    <div class="menuwrap"><button class="btn" type="button" data-a="menu" aria-expanded="${state.menu}">Menu</button>
+    ${state.menu?`<div class="menu" role="menu">
+      <button type="button" data-a="view" data-v="history">Turn history <span class="count muted">${state.log.length}</span></button>
+      <button type="button" data-a="view" data-v="settings">Players &amp; your cards</button>
+      <button type="button" data-a="view" data-v="cards">Edit cards / edition</button>
+      <button type="button" data-a="view" data-v="help">How to use</button>
+      <hr><button type="button" class="danger" data-a="asknew">New game</button></div>`:''}</div></header>`;
+}
+function confirmNew(){return `<div class="confirm"><span>Start a new game? This clears the sheet and turn history. Players and cards stay.</span><button class="btn" type="button" data-a="donew">Start new game</button><button class="btn" type="button" data-a="cancel">Cancel</button></div>`;}
+
+function gameView(S,D){
+  const verdict=`<section class="verdict" aria-label="Solution so far">${cats().map(cat=>{
+    const sol=cat.cards.find(c=>S.K[c.id].env==='y'), left=cat.cards.filter(c=>S.K[c.id].env!=='n').length;
+    return `<div class="slot ${sol?'solved':''}"><span class="q">${esc(cat.q||cat.name)}</span><span class="v">${sol?esc(sol.name):'?'}</span><span class="s">${sol?'Solved!':left+' left'}</span></div>`}).join('')}</section>`;
+  const tip=state.tip?`<div class="tip"><div class="row spread"><h3>How it works</h3><button class="link plain" type="button" data-a="hidetip">Got it</button></div>
+    <ol><li>On every turn, tap <b>Record a turn</b> and answer the questions. The sheet fills itself in.</li>
+    <li>Tap any box to mark it yourself: <b>✓</b> has it, <b>✕</b> doesn’t, <b>?</b> maybe. Tap again to change it.</li>
+    <li>Crossed-out cards are not the answer. When only one is left, it shows at the top.</li></ol></div>`:'';
   const owners=[...state.players.map(p=>p.id),'env'];
-  const conflictCards=[...S.conflicts].map(x=>x.split('|')[0]);
-  const head=state.players.map(p=>{
-    const known=allCards().filter(c=>S.K[c.id][p.id]==='y').length;
-    return `<th scope="col"><div class="ph"><span class="pn ${p.id===state.me?'me':''}" title="${esc(p.name)}">${esc(p.name)}</span>
-      <span class="meta">${known}/${D.sizes[p.id]} cards</span>${D.extra[p.id]?'<span class="badge" title="Holds one of the leftover cards">+1 card</span>':''}</div></th>`}).join('')
-    +`<th scope="col"><div class="ph"><span class="pn">Case file</span><span class="meta">${D.envN} cards</span></div></th>`;
+  const head=state.players.map(p=>`<th scope="col"><div class="ph"><span class="pn ${p.id===state.me?'me':''}" title="${esc(pName(p.id))}">${p.id===state.me?'You':esc(pName(p.id))}</span><span class="meta">${D.sizes[p.id]} cards</span></div></th>`).join('')
+    +`<th scope="col"><div class="ph"><span class="pn">Envelope</span><span class="meta">answer</span></div></th>`;
   let body='';
-  state.categories.forEach(cat=>{
-    if(!cat.cards.length)return;
+  cats().forEach(cat=>{
     body+=`<tr class="cat"><td class="namecol">${esc(cat.name)}</td><td colspan="${owners.length}"></td></tr>`;
     cat.cards.forEach(c=>{
-      const k=S.K[c.id]; const sol=k.env==='y'; const cleared=k.env==='n'; const up=state.faceup.includes(c.id);
-      body+=`<tr class="${sol?'solution':''} ${cleared?'cleared':''}"><th scope="row" class="namecol"><div class="cardname">${c.color?`<span class="dot" style="background:${esc(c.color)}"></span>`:''}<span class="nm">${esc(c.name)}</span>${up?'<span class="tag up">face up</span>':''}${sol?'<span class="tag sol">solution</span>':''}</div></th>`;
+      const k=S.K[c.id], sol=k.env==='y', cleared=k.env==='n';
+      body+=`<tr class="${sol?'solution':''} ${cleared?'cleared':''}"><th scope="row" class="namecol"><div class="cardname">${dot(c)}<span class="nm">${esc(c.name)}</span></div></th>`;
       owners.forEach(o=>{
-        const man=(state.marks[c.id]||{})[o]; const der=k[o]; const bad=S.conflicts.has(c.id+'|'+o);
-        const mb=!man&&!der&&S.maybe.has(c.id+'|'+o);
-        const v=man||der||(mb?'m':''); const cls=['mk',v||'',(!man&&(der||mb))?'auto':'',bad?'conflict':''].join(' ');
-        const label=`${c.name}, ${pName(o)}: ${v==='y'?'has it':v==='n'?'does not have it':v==='m'?'maybe':'unknown'}${!man&&(der||mb)?' (deduced)':''}`;
-        body+=`<td class="cell ${o==='env'?'envcell':''}"><button type="button" class="${cls}" data-cell="${c.id}|${o}" aria-label="${esc(label)}">${v?GLYPH[v]:''}</button></td>`;
+        const man=(state.marks[c.id]||{})[o], der=k[o], mb=!man&&!der&&S.maybe.has(c.id+'|'+o), bad=S.conflicts.has(c.id+'|'+o);
+        const v=man||der||(mb?'m':''); const auto=!man&&(der||mb);
+        const label=`${c.name}, ${pName(o)}: ${v==='y'?'has it':v==='n'?'does not have it':v==='m'?'maybe':'unknown'}${auto?' (worked out)':''}`;
+        body+=`<td class="cell ${o==='env'?'env':''}"><button type="button" class="mk ${v} ${auto?'auto':''} ${bad?'conflict':''}" data-a="cell" data-v="${c.id}|${o}" aria-label="${esc(label)}">${v==='y'?'✓':v==='n'?'✕':v==='m'?'?':''}</button></td>`;
       });
       body+='</tr>';
     });
   });
-  const empty=!allCards().length;
-  return `<div class="panel">
-    ${S.conflicts.size?`<div class="alert">Your marks contradict each other on ${[...new Set(conflictCards)].map(id=>esc((cardById(id)||{}).name)).join(', ')}. Check the red cells and the suggestion log.</div>`:''}
-    <div class="row spread"><div class="legend">Tap a cell to cycle:
-      <span class="mk y">✓</span> has it <span class="mk n">✕</span> doesn't <span class="mk m">?</span> maybe
-      <span class="mk y auto">✓</span> deduced <span class="mk m auto">?</span> could be one of theirs</div>
-      <label class="chk"><input type="checkbox" id="auto" ${state.auto?'checked':''}> Auto-deduce</label></div>
-    ${empty?`<div class="note">This deck has no cards yet. Add some on the <b>Cards</b> tab.</div>`:`<div class="gridwrap"><table class="sheet"><thead><tr><th class="namecol" scope="col">Card</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`}
-    <div class="field"><span>Notes</span><textarea id="notes" placeholder="Who keeps asking about the Library? Anything worth remembering.">${esc(state.notes)}</textarea></div>
-  </div>`;
+  return `${verdict}${tip}
+    ${S.conflicts.size?`<div class="alert">Some marks don’t add up (shown in red). Check them, or look at Menu → Turn history for a wrong entry.</div>`:''}
+    <div class="gridwrap"><table class="sheet"><thead><tr><th class="namecol" scope="col">Card</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <div class="legend"><span><i class="mk y">✓</i>has it</span><span><i class="mk n">✕</i>doesn’t</span><span><i class="mk m">?</i>maybe</span><span><i class="mk y auto">✓</i>dashed = worked out for you</span></div>
+    <details><summary class="muted small" style="cursor:pointer">Notes</summary><textarea id="notes" style="margin-top:8px" placeholder="Anything worth remembering">${esc(state.notes)}</textarea></details>`;
 }
 
-function nextAfter(id){const i=pIdx(id); return state.players[((i<0?0:i)+1)%state.players.length].id;}
-function defaultDraft(){const last=[...state.log].reverse().find(e=>pIdx(e.by)>=0); return {type:'suggest',by:last?nextAfter(last.by):state.me,cards:{},shower:'',shown:'',resp:{}};}
-function renderLog(S){
-  const cats=state.categories.filter(c=>c.cards.length);
-  const opts=(arr,sel)=>arr.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.name)}</option>`).join('');
-  const d=state.draft||(state.draft=defaultDraft()); d.resp=d.resp||{}; d.type=d.type||'suggest'; d.cards=d.cards||{};
-  if(pIdx(d.by)<0) d.by=state.me;
-  const byMe=d.by===state.me, isAcc=d.type==='accuse';
-  const picked=cats.map(c=>d.cards[c.id]).filter(Boolean);
-  const n=state.players.length, s=pIdx(d.by); const order=[]; for(let i=1;i<n;i++) order.push(state.players[(s+i)%n]);
-  const respOpts=pid=>{const r=d.resp[pid]||'';
-    let o=`<option value="">Not recorded</option><option value="none" ${r==='none'?'selected':''}>Had none of them</option><option value="some" ${r==='some'?'selected':''}>Showed a card</option>`;
-    if(byMe) picked.forEach(id=>{const c=cardById(id); if(c) o+=`<option value="${id}" ${r===id?'selected':''}>Showed ${esc(c.name)}</option>`;});
-    return o;};
-  const help=isAcc?'A wrong accusation means at least one of those cards is not in the case file. The sheet uses that once the other cards are confirmed.'
-    :state.rule==='first'?'Everyone between the suggester and the person who showed is marked ✕ for all three cards. A card shown to someone else is worked out once the other two are ruled out for that player.'
-    :'Each “had none” is marked ✕ for all three cards. Each “showed a card” puts ? on the cards it could be, and turns into ✓ once the other two are ruled out.';
-  const form=`<form class="panel" id="sugform">
-    <div class="row spread"><h2>Record a turn</h2>
-      <div class="seg" role="group" aria-label="Turn type"><button type="button" data-ltype="suggest" aria-pressed="${!isAcc}">Suggestion</button><button type="button" data-ltype="accuse" aria-pressed="${isAcc}">Wrong accusation</button></div></div>
-    <div class="form">
-      <label class="field"><span>${isAcc?'Accused by':'Suggested by'}</span><select id="f-by">${opts(state.players,d.by)}</select></label>
-      ${cats.map(c=>`<label class="field"><span>${esc(c.name.replace(/s$/,''))}</span><select data-fcat="${c.id}"><option value="">—</option>${opts(c.cards,d.cards[c.id])}</select></label>`).join('')}
-      ${!isAcc&&state.rule==='first'?`<label class="field"><span>Shown a card by</span><select id="f-shower"><option value="">No one could show</option>${opts(order,d.shower)}</select></label>
-      ${byMe&&d.shower?`<label class="field"><span>Card you were shown</span><select id="f-shown"><option value="">Not recorded</option>${opts(picked.map(cardById).filter(Boolean),d.shown)}</select></label>`:''}`:''}
-    </div>
-    ${!isAcc&&state.rule==='all'?`<div class="field"><span>How each player answered, in asking order</span><div class="form">${order.map(p=>`<label class="field"><span>${esc(p.name)}</span><select data-resp="${p.id}">${respOpts(p.id)}</select></label>`).join('')}</div></div>`:''}
-    ${!isAcc?`<div class="row"><span class="muted" style="font-size:13px">Answering rule at your table:</span><div class="seg" role="group" aria-label="Answering rule"><button type="button" data-rule="first" aria-pressed="${state.rule==='first'}">First to show stops</button><button type="button" data-rule="all" aria-pressed="${state.rule==='all'}">Everyone answers</button></div></div>`:''}
-    <div class="row"><button class="btn primary" type="submit" ${picked.length?'':'disabled'}>Add to log</button><span class="muted" style="font-size:13px;max-width:65ch">${help}</span></div>
-  </form>`;
+/* ----- record a turn ----- */
+function defaultDraft(){const last=[...state.log].reverse().find(e=>pIdx(e.by)>=0); const by=last?state.players[(pIdx(last.by)+1)%state.players.length].id:state.me; return {type:'suggest',by,cards:{},shower:null,shown:null,resp:{}};}
+function turnDialog(){
+  const d=state.draft; const isAcc=d.type==='accuse'; const byMe=d.by===state.me;
+  const picked=cats().map(c=>d.cards[c.id]).filter(Boolean); const complete=picked.length===cats().length;
+  const n=state.players.length, s=pIdx(d.by); const order=[]; for(let i=1;i<n;i++)order.push(state.players[(s+i)%n]);
+  let q=1;
+  let html=`<div class="qn"><h3>${q++}. Who ${isAcc?'made the accusation':'asked'}?</h3><div class="picks">${state.players.map(p=>`<button type="button" class="pick ${d.by===p.id?'on':''}" data-a="d-by" data-v="${p.id}" aria-pressed="${d.by===p.id}">${p.id===state.me?'You':esc(pName(p.id))}</button>`).join('')}</div></div>`;
+  html+=`<div class="qn"><h3>${q++}. What did they ${isAcc?'accuse':'ask about'}?</h3>${cats().map(cat=>`<div class="group"><span class="lab">${esc(cat.name)}</span><div class="picks">${cat.cards.map(c=>`<button type="button" class="pick ${d.cards[cat.id]===c.id?'on':''}" data-a="d-card" data-v="${cat.id}|${c.id}" aria-pressed="${d.cards[cat.id]===c.id}">${dot(c)}${esc(c.name)}</button>`).join('')}</div></div>`).join('')}</div>`;
+  if(!isAcc&&state.rule==='first'){
+    html+=`<div class="qn"><h3>${q++}. Who showed ${byMe?'you':'them'} a card? <span class="sub">players are asked in this order</span></h3><div class="picks">${order.map(p=>`<button type="button" class="pick ${d.shower===p.id?'on':''}" data-a="d-shower" data-v="${p.id}" aria-pressed="${d.shower===p.id}">${p.id===state.me?'You':esc(pName(p.id))}</button>`).join('')}<button type="button" class="pick ${d.shower==='none'?'on':''}" data-a="d-shower" data-v="none" aria-pressed="${d.shower==='none'}">Nobody</button></div></div>`;
+    if(byMe&&d.shower&&d.shower!=='none') html+=`<div class="qn"><h3>${q++}. Which card did they show you?</h3><div class="picks">${picked.map(id=>{const c=cardById(id);return `<button type="button" class="pick ${d.shown===id?'on':''}" data-a="d-shown" data-v="${id}" ${complete?'':'disabled'}>${dot(c)}${esc(c.name)}</button>`}).join('')||'<span class="muted small">Pick the three cards above first.</span>'}</div></div>`;
+  }
+  if(!isAcc&&state.rule==='all'){
+    html+=`<div class="qn"><h3>${q++}. What did each player answer?</h3><div class="resp">${order.map(p=>{const r=d.resp[p.id];
+      const opt=(v,l)=>`<button type="button" class="pick ${r===v?'on':''}" data-a="d-resp" data-v="${p.id}|${v}">${l}</button>`;
+      return `<span class="who">${p.id===state.me?'You':esc(pName(p.id))}</span><div class="picks">${opt('none','No card')}${byMe?picked.map(id=>opt(id,'Showed '+esc(cardById(id).name))).join(''):opt('some','Showed a card')}</div>`}).join('')}</div></div>`;
+  }
+  const ready=complete&&(isAcc||state.rule==='all'||d.shower);
+  return `<div class="scrim" data-a="closeturn-bg"><div class="dialog" role="dialog" aria-modal="true" aria-label="Record a turn">
+    <div class="dhead"><div class="seg" role="group" aria-label="Turn type"><button type="button" data-a="d-type" data-v="suggest" aria-pressed="${!isAcc}">Suggestion</button><button type="button" data-a="d-type" data-v="accuse" aria-pressed="${isAcc}">Wrong accusation</button></div>
+      <button class="x" type="button" data-a="closeturn" aria-label="Close">✕</button></div>
+    <div class="dbody">${html}${isAcc?'<p class="hint">A wrong accusation means at least one of those three cards is not in the envelope.</p>':''}</div>
+    <div class="dfoot"><button class="btn" type="button" data-a="closeturn">Cancel</button><button class="btn primary wide" type="button" data-a="saveturn" ${ready?'':'disabled'}>Save turn</button></div>
+  </div></div>`;
+}
+
+/* ----- other views ----- */
+function historyView(){
   const items=state.log.map((e,i)=>{
-    const names=e.cards.filter(Boolean).map(id=>{const c=cardById(id);const on=e.shown===id||(e.responses&&Object.values(e.responses).includes(id));return c?`<span class="chip ${on?'on':''}">${c.color?`<span class="dot" style="background:${esc(c.color)}"></span>`:''}${esc(c.name)}</span>`:''}).join('');
+    const shownIds=e.responses?Object.values(e.responses):[e.shown];
+    const names=e.cards.map(id=>{const c=cardById(id);return c?`<span class="tagc ${shownIds.includes(id)?'on':''}">${dot(c)}${esc(c.name)}</span>`:''}).join('');
     let res;
-    if(e.type==='accuse') res='Wrong: at least one of these is not in the case file';
-    else if(e.responses){const parts=Object.entries(e.responses).map(([pid,r])=>`${esc(pName(pid))}: ${r==='none'?'none':r==='some'?'showed a card':`showed <b>${esc((cardById(r)||{}).name)}</b>`}`); res=parts.length?parts.join(' · '):'No answers recorded';}
-    else res=e.shower?`${esc(pName(e.shower))} showed ${e.shown?`<b>${esc((cardById(e.shown)||{}).name)}</b>`:'a card'}`:'No one could show a card';
-    return `<li><div class="txt"><div><span class="num">#${i+1}</span> <b>${esc(pName(e.by))}</b> ${e.type==='accuse'?'made an accusation':'suggested'}</div><div>${names}</div>
-      <div class="muted" style="font-size:13px">${res}</div></div>
-      <button class="iconbtn" type="button" data-act="dellog" data-i="${i}" aria-label="Delete turn ${i+1}">✕</button></li>`}).reverse().join('');
-  return form+`<div class="panel"><h2>Log</h2>${state.log.length?`<ul class="log">${items}</ul>`:'<div class="note">No turns yet. Each one you record feeds the deductions on the sheet, and the next suggester is picked for you.</div>'}</div>`;
+    if(e.type==='accuse')res='Wrong accusation';
+    else if(e.responses){const p=Object.entries(e.responses).map(([pid,r])=>`${esc(pName(pid))}: ${r==='none'?'no card':r==='some'?'showed a card':'showed '+esc((cardById(r)||{}).name)}`);res=p.join(' · ')||'No answers';}
+    else res=e.shower?`${esc(pName(e.shower))} showed ${e.shown?'<b>'+esc((cardById(e.shown)||{}).name)+'</b>':'a card'}`:'Nobody could show a card';
+    return `<li><div class="t"><span><span class="count muted small">#${i+1}</span> <b>${e.by===state.me?'You':esc(pName(e.by))}</b> ${e.type==='accuse'?'accused':'asked about'}</span><div>${names}</div><span class="muted small">${res}</span></div>
+      <button class="x" type="button" data-a="dellog" data-v="${i}" aria-label="Delete turn ${i+1}">✕</button></li>`}).reverse().join('');
+  return `<div class="card"><h2>Turn history</h2>${state.log.length?`<ul class="log">${items}</ul><p class="muted small">Made a mistake? Delete the turn and record it again.</p>`:'<p class="muted">No turns yet. Tap <b>Record a turn</b> after each suggestion.</p>'}</div>`;
+}
+function settingsView(D){
+  const h=D.sizes[state.me]; const full=cats().find(c=>c.cards.every(k=>state.hand.includes(k.id)));
+  return `<div class="card"><h2>Players</h2>
+      <div class="names">${state.players.map((p,i)=>`<div class="nrow"><span class="seat">${i===0?'You':i+1}</span><input type="text" id="sname-${p.id}" data-name="${p.id}" value="${esc(p.name)}" placeholder="${i===0?'Your name':'Player '+(i+1)}"></div>`).join('')}</div>
+      <p class="muted small">To change the number of players, start a new game from the menu.</p></div>
+    ${D.rem?`<div class="card"><h2>Extra cards</h2>
+      <div class="seg" role="group"><button type="button" data-a="leftover" data-v="deal" aria-pressed="${state.leftover==='deal'}">Some players got an extra card</button><button type="button" data-a="leftover" data-v="faceup" aria-pressed="${state.leftover==='faceup'}">Leftovers face up</button></div>
+      ${state.leftover==='deal'?`<p class="small">Tap the ${D.rem} player${D.rem>1?'s':''} who got ${D.base+1} cards <span class="count muted">· ${D.exCount} of ${D.rem}</span></p><div class="picks">${state.players.map(p=>`<button type="button" class="pick ${D.extra[p.id]?'on':''}" data-a="extra" data-v="${p.id}">${esc(pName(p.id))}</button>`).join('')}</div>`
+        :`<p class="small">Tap the ${D.rem} face-up card${D.rem>1?'s':''} <span class="count muted">· ${state.faceup.length} of ${D.rem}</span></p><div class="picks">${allCards().map(c=>`<button type="button" class="pick ${state.faceup.includes(c.id)?'on':''}" data-a="faceup" data-v="${c.id}">${dot(c)}${esc(c.name)}</button>`).join('')}</div>`}
+      ${D.known?'':'<p class="alert">Until this is filled in, the sheet won’t use hand sizes to work things out.</p>'}</div>`:''}
+    <div class="card"><h2>Your cards <span class="count muted" style="font-size:15px;font-weight:400">${state.hand.length} of ${h}</span></h2>
+      ${cats().map(cat=>`<div class="group"><span class="lab">${esc(cat.name)}</span><div class="picks">${cat.cards.filter(c=>!state.faceup.includes(c.id)).map(c=>`<button type="button" class="pick ${state.hand.includes(c.id)?'on':''}" data-a="hand" data-v="${c.id}">${dot(c)}${esc(c.name)}</button>`).join('')}</div></div>`).join('')}
+      ${state.hand.length&&state.hand.length!==h?`<p class="alert">You should have ${h} cards (you’ve picked ${state.hand.length}).</p>`:''}
+      ${full?`<p class="alert">You can’t have every card in ${esc(full.name)}.</p>`:''}</div>
+    <div class="card"><h2>Table rules</h2>
+      <div class="group"><span class="lab">When someone makes a suggestion</span>
+        <div class="seg" role="group"><button type="button" data-a="rule" data-v="first" aria-pressed="${state.rule==='first'}">First player with a card shows it</button><button type="button" data-a="rule" data-v="all" aria-pressed="${state.rule==='all'}">Everyone answers</button></div></div>
+      <label class="chk"><input type="checkbox" id="auto" ${state.auto?'checked':''}> Work things out automatically (dashed marks)</label></div>`;
+}
+function cardsView(){
+  const back=!state.started?`<button class="btn" type="button" data-a="wizback">← Back to setup</button>`:'';
+  return `${back}<div class="card"><div class="row spread"><h2>Cards</h2>
+      <select id="preset" aria-label="Load an edition" style="width:auto"><option value="">Load an edition…</option>${Object.entries(PRESETS).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('')}</select></div>
+    ${state.pendingPreset?`<div class="confirm"><span>Load “${esc(PRESETS[state.pendingPreset].label)}”? This replaces all cards and clears the sheet.</span><button class="btn" type="button" data-a="loadpreset">Load it</button><button class="btn" type="button" data-a="cancelpreset">Cancel</button></div>`:''}
+    <p class="muted small">Playing a themed or homemade version? Rename, recolor, add or remove cards. One card from each group goes in the envelope.</p>
+    <div class="cats">${state.categories.map(cat=>`<div class="catbox"><div class="row" style="flex-wrap:nowrap"><input type="text" id="cat-${cat.id}" data-catname="${cat.id}" value="${esc(cat.name)}" aria-label="Group name" style="font-weight:600">${state.categories.length>1?`<button class="x" type="button" data-a="delcat" data-v="${cat.id}" aria-label="Delete group">✕</button>`:''}</div>
+      ${cat.cards.map(c=>`<div class="crow"><input type="color" value="${esc(c.color||'#8a94a0')}" data-ccolor="${c.id}" aria-label="Color for ${esc(c.name)}"><input type="text" id="c-${c.id}" data-cname="${c.id}" value="${esc(c.name)}" aria-label="Card name"><button class="x" type="button" data-a="delcard" data-v="${c.id}" aria-label="Remove ${esc(c.name)}">✕</button></div>`).join('')||'<p class="muted small">No cards yet.</p>'}
+      <form class="addrow" data-addcard="${cat.id}"><input type="text" id="add-${cat.id}" placeholder="Add a card"><button class="btn" type="submit">Add</button></form></div>`).join('')}</div>
+    <button class="link" type="button" data-a="addcat">+ Add a group</button></div>`;
+}
+function helpView(D){
+  let ref=''; for(let k=3;k<=6;k++){const b=Math.floor(D.dealtAll/k),r=D.dealtAll%k; ref+=`<tr><td>${k}</td><td>${r?`${r} get ${b+1}, ${k-r} get ${b}`:`all get ${b}`}</td></tr>`;}
+  return `<div class="card"><h2>How to use this notebook</h2>
+    <div class="stack small" style="max-width:65ch">
+      <p><b>1. Set up.</b> Enter players clockwise starting with you, say who got an extra card, and tap the cards in your hand.</p>
+      <p><b>2. Every turn.</b> Tap <b>Record a turn</b>: who asked, which three cards, and who showed a card. Players who passed get ✕ for all three cards. If you were shown a card, pick it and it gets ✓.</p>
+      <p><b>3. Let it work things out.</b> Dashed marks were worked out for you, for example when a player’s hand is full, or when someone showed a card and the other two are ruled out. A <b>?</b> means “one of these could be theirs”.</p>
+      <p><b>4. Your own notes.</b> Tap any box to cycle ✓ → ✕ → ? → blank. Your marks always win over worked-out ones.</p>
+      <p><b>5. Solve it.</b> When only one card in a group can be in the envelope, it appears at the top. Get all three, then make your accusation.</p></div></div>
+  <div class="card"><h2>Dealing the cards</h2>
+    <p class="small" style="max-width:65ch">One card from each group goes into the envelope unseen. The other ${D.dealtAll} are dealt clockwise from the dealer’s left until none are left, so with 4 or 5 players some people get one extra card. Some tables put the leftovers face up instead.</p>
+    <div style="overflow-x:auto"><table class="ref"><thead><tr><th>Players</th><th>Cards each (${D.dealtAll} dealt)</th></tr></thead><tbody>${ref}</tbody></table></div></div>`;
 }
 
-function renderSetup(S,D){
-  const n=state.players.length;
-  const rows=state.players.map((p,i)=>`<div class="prow"><span class="seat">${i+1}</span>
-    <input type="text" id="pname-${p.id}" data-pname="${p.id}" value="${esc(p.name)}" aria-label="Player ${i+1} name">
-    <div class="opts"><label class="chk"><input type="radio" name="me" data-me="${p.id}" ${p.id===state.me?'checked':''}> Me</label>
-      <label class="chk"><input type="radio" name="dealer" data-dealer="${p.id}" ${p.id===state.dealer?'checked':''}> Dealer</label></div>
-    <div class="moves"><button class="iconbtn" type="button" data-move="${i}|-1" ${i===0?'disabled':''} aria-label="Move up">↑</button><button class="iconbtn" type="button" data-move="${i}|1" ${i===n-1?'disabled':''} aria-label="Move down">↓</button></div>
-    <button class="iconbtn" type="button" data-delp="${p.id}" ${n<=2?'disabled':''} aria-label="Remove ${esc(p.name)}">✕</button></div>`).join('');
-  const tick=state.leftover==='deal'&&D.rem>0;
-  const deal=state.players.map(p=>`<div class="dcard ${D.extra[p.id]?'extra':''}"><span class="n">${esc(p.name)}</span><span class="mono">${D.sizes[p.id]} cards</span>${tick?`<label class="chk" style="font-size:12px"><input type="checkbox" data-extra="${p.id}" ${D.extra[p.id]?'checked':''}> Got an extra card</label>`:''}</div>`).join('');
-  const hand=state.hand||[]; const myH=D.sizes[state.me];
-  const fullCat=state.categories.find(c=>c.cards.length&&c.cards.every(k=>hand.includes(k.id)));
-  const handPanel=`<div class="panel"><div class="row spread"><h2>Your hand</h2><span class="mono muted">${hand.length}/${myH} picked</span></div>
-    <div class="muted" style="font-size:13px">Tick the cards you were dealt (you are <b>${esc(pName(state.me))}</b>). They get ✓ in your column, which rules them out for everyone else, and every other card gets ✕ for you.</div>
-    ${state.categories.filter(c=>c.cards.length).map(cat=>`<div class="field"><span>${esc(cat.name)}</span><div>${cat.cards.filter(c=>!state.faceup.includes(c.id)).map(c=>`<button type="button" class="chip ${hand.includes(c.id)?'on':''}" data-hand="${c.id}" aria-pressed="${hand.includes(c.id)}">${c.color?`<span class="dot" style="background:${esc(c.color)}"></span>`:''}${esc(c.name)}</button>`).join('')}</div></div>`).join('')}
-    ${hand.length&&hand.length!==myH?`<div class="alert">There should be ${myH} cards in your hand (currently ${hand.length}).</div>`:''}
-    ${fullCat?`<div class="alert">You can't hold every card in ${esc(fullCat.name)}: one of them is in the case file.</div>`:''}</div>`;
-  const extraNames=state.players.filter(p=>D.extra[p.id]).map(p=>p.name);
-  let ref='';
-  for(let k=3;k<=6;k++){const b=Math.floor(D.dealtAll/k),r=D.dealtAll%k;
-    ref+=`<tr class="${k===n?'cur':''}"><td>${k}</td><td>${r?`${r} × ${b+1}, ${k-r} × ${b}`:`${k} × ${b}`}</td><td>${r?`${r} face up, ${k} × ${b}`:'none'}</td></tr>`;}
-  const faceupChips=state.leftover==='faceup'?`<div class="field"><span>Which cards are face up? (${state.faceup.length} of ${D.faceupExpected} picked)</span><div>${allCards().map(c=>`<button type="button" class="chip ${state.faceup.includes(c.id)?'on':''}" data-faceup="${c.id}" aria-pressed="${state.faceup.includes(c.id)}">${esc(c.name)}</button>`).join('')}</div>
-    ${state.faceup.length!==D.faceupExpected?`<div class="muted" style="font-size:13px">With ${n} players, ${D.faceupExpected} card${D.faceupExpected===1?'':'s'} should be face up.</div>`:''}</div>`:'';
-  return `<div class="panel"><div class="row spread"><h2>Players in seating order</h2><button class="btn small" type="button" data-act="addp" ${n>=8?'disabled':''}>Add player</button></div>
-    <div class="players">${rows}</div>
-    <div class="muted" style="font-size:13px">List players clockwise around the table. Seating order decides who gets asked first during a suggestion and who receives the extra cards.</div></div>
-  ${handPanel}
-  <div class="panel"><div class="row spread"><h2>The deal</h2>
-    <div class="seg" role="group" aria-label="Leftover cards"><button type="button" data-left="deal" aria-pressed="${state.leftover==='deal'}">Deal every card</button><button type="button" data-left="faceup" aria-pressed="${state.leftover==='faceup'}">Leftovers face up</button></div></div>
-    <div class="note">${D.total} cards in the deck. <b>${D.envN}</b> go in the case file (one from each category), leaving <b>${D.dealtAll}</b> to deal among ${n} players.
-      ${D.rem===0?` That splits evenly: ${D.base} cards each.`:state.leftover==='deal'
-        ?(D.manual?` That doesn't split evenly, so ${D.rem} player${D.rem>1?'s':''} get${D.rem>1?'':'s'} one extra card. You ticked: <b>${esc(extraNames.join(', ')||'nobody yet')}</b>.`
-          :` That doesn't split evenly, so the first ${D.rem} player${D.rem>1?'s':''} to the dealer's left get${D.rem>1?'':'s'} one extra card: <b>${esc(extraNames.join(', '))}</b>. Dealt differently? Tick who actually got them below.`)
-        :` The ${D.rem} leftover card${D.rem>1?'s go':' goes'} face up for everyone to see, and each player holds ${D.base}. Face-up cards are marked as cleared for everyone.`}</div>
-    <div class="deal">${deal}</div>
-    ${D.manual?`<div class="row">${D.extraCount!==D.rem?`<div class="alert">Hands should add up to ${D.dealtAll} cards (currently ${D.dealtAll-D.rem+D.extraCount}). Tick exactly ${D.rem} player${D.rem>1?'s':''}.</div>`:''}<button class="btn small ghost" type="button" data-act="resetextras">Use dealer order again</button></div>`:''}
-    ${faceupChips}
-    <details><summary class="muted" style="cursor:pointer;font-size:14px">How the official rules handle uneven deals</summary>
-      <div style="display:grid;gap:10px;margin-top:10px;font-size:14px">
-        <p style="margin:0;max-width:65ch">In the standard game, one suspect, one weapon and one room go into the confidential case file unseen. The remaining cards are shuffled and dealt clockwise, starting with the player to the dealer's left, until none are left. Players start with three to six cards depending on table size, so with 4 or 5 players some players hold one more card than others. A common house rule, and the official rule in some editions, puts the leftover cards face up instead so every hand is the same size. Pick whichever your table uses above.</p>
-        <div style="overflow-x:auto"><table class="ref"><thead><tr><th>Players</th><th>Deal every card</th><th>Leftovers face up</th></tr></thead><tbody>${ref}</tbody></table></div>
-      </div></details>
-  </div>`;
-}
-
-function renderCards(){
-  const presetOpts=Object.entries(PRESETS).map(([k,v])=>`<option value="${k}" ${k===state.pendingPreset?'selected':''}>${esc(v.label)}</option>`).join('');
-  const cats=state.categories.map(cat=>`<div class="catbox"><div class="row spread"><input type="text" id="catname-${cat.id}" data-catname="${cat.id}" value="${esc(cat.name)}" aria-label="Category name" style="font-weight:600;flex:1">
-      ${state.categories.length>1?`<button class="iconbtn" type="button" data-delcat="${cat.id}" aria-label="Delete category ${esc(cat.name)}">✕</button>`:''}</div>
-    ${cat.cards.map(c=>`<div class="crow"><input type="color" value="${esc(c.color||'#8a94a0')}" data-ccolor="${c.id}" aria-label="Color for ${esc(c.name)}">
-      <input type="text" id="cname-${c.id}" data-cname="${c.id}" value="${esc(c.name)}" aria-label="Card name">
-      <button class="iconbtn" type="button" data-delcard="${c.id}" aria-label="Remove ${esc(c.name)}">✕</button></div>`).join('')||'<div class="muted" style="font-size:13px">No cards yet.</div>'}
-    <form class="addrow" data-addcard="${cat.id}"><input type="text" id="add-${cat.id}" placeholder="Add a ${esc(cat.name.toLowerCase().replace(/s$/,''))}" aria-label="New card for ${esc(cat.name)}"><button class="btn small" type="submit">Add</button></form></div>`).join('');
-  return `<div class="panel"><div class="row spread"><h2>Deck</h2>
-      <div class="row"><select id="preset" aria-label="Load an edition"><option value="">Load an edition…</option>${presetOpts}</select>
-      <button class="btn small" type="button" data-act="addcat">Add category</button></div></div>
-    ${state.pendingPreset?`<div class="confirm">Loading “${esc(PRESETS[state.pendingPreset].label)}” replaces every card and clears the sheet. <button class="btn small" type="button" data-act="loadpreset">Load it</button><button class="btn small ghost" type="button" data-act="cancelpreset">Cancel</button></div>`:''}
-    <div class="muted" style="font-size:13px">Playing a themed, travel or homemade version? Rename, recolor, add or remove cards. Each category puts one card in the case file, and hand sizes update automatically.</div>
-    <div class="cats">${cats}</div></div>`;
-}
-
-/* ---------- events ---------- */
-const main=document.getElementById('main');
-document.addEventListener('click',e=>{
-  const t=e.target.closest('button'); if(!t)return;
-  if(t.dataset.tab){state.tab=t.dataset.tab; save(); render(); return;}
-  if(t.id==='undo'){if(history.length){state=JSON.parse(history.pop()); save(); render();} return;}
-  if(t.id==='newgame'){confirming='new'; render(); return;}
-  const act=t.dataset.act;
-  if(act==='cancel'){confirming=null; render(); return;}
-  if(act==='confirm-new'){confirming=null; commit(()=>{const tab=state.tab; state=freshState(state); state.tab=tab;}); return;}
-  if(t.dataset.cell){const [cid,o]=t.dataset.cell.split('|'); commit(()=>{
-    const m=state.marks[cid]||(state.marks[cid]={}); const order=[undefined,'y','n','m']; const next=order[(order.indexOf(m[o])+1)%4];
-    if(next) m[o]=next; else delete m[o];}); return;}
-  if(act==='dellog'){commit(()=>state.log.splice(+t.dataset.i,1)); return;}
-  if(t.dataset.ltype){const d=state.draft||(state.draft=defaultDraft()); d.type=t.dataset.ltype; save(); render(); return;}
-  if(t.dataset.rule){state.rule=t.dataset.rule; if(state.draft)state.draft.resp={}; save(); render(); return;}
-  if(t.dataset.hand){const id=t.dataset.hand; commit(()=>{const h=state.hand||[]; state.hand=h.includes(id)?h.filter(x=>x!==id):[...h,id];}); return;}
-  if(act==='resetextras'){commit(()=>state.extras=null); return;}
-  if(act==='addp'){commit(()=>{state.players.push({id:uid(),name:'Player '+(state.players.length+1)}); state.extras=null;}); return;}
-  if(t.dataset.delp){const id=t.dataset.delp; commit(()=>{
-    state.players=state.players.filter(p=>p.id!==id);
-    if(state.me===id)state.me=state.players[0].id; if(state.dealer===id)state.dealer=state.players[state.players.length-1].id;
-    for(const c in state.marks) delete state.marks[c][id];
-    state.log=state.log.filter(x=>x.by!==id&&x.shower!==id); state.log.forEach(x=>{if(x.responses)delete x.responses[id];});
-    state.extras=null; state.draft=null;}); return;}
-  if(t.dataset.move){const [i,dir]=t.dataset.move.split('|').map(Number); commit(()=>{const a=state.players; [a[i],a[i+dir]]=[a[i+dir],a[i]];}); return;}
-  if(t.dataset.left){commit(()=>{state.leftover=t.dataset.left; state.extras=null; if(state.leftover==='deal')state.faceup=[];}); return;}
-  if(t.dataset.faceup){const id=t.dataset.faceup; commit(()=>{state.faceup=state.faceup.includes(id)?state.faceup.filter(x=>x!==id):[...state.faceup,id];}); return;}
-  if(t.dataset.delcard){const id=t.dataset.delcard; commit(()=>removeCards([id])); return;}
-  if(t.dataset.delcat){const id=t.dataset.delcat; commit(()=>{const cat=state.categories.find(c=>c.id===id); removeCards(cat.cards.map(c=>c.id)); state.categories=state.categories.filter(c=>c.id!==id);}); return;}
-  if(act==='addcat'){commit(()=>state.categories.push({id:uid(),name:'New category',short:'',cards:[]})); return;}
-  if(act==='loadpreset'){const k=state.pendingPreset; commit(()=>{state.preset=k; state.categories=buildCats(k); state.marks={}; state.log=[]; state.faceup=[]; state.draft=null; delete state.pendingPreset;}); return;}
-  if(act==='cancelpreset'){delete state.pendingPreset; render(); return;}
-});
+/* ---------- actions ---------- */
 function removeCards(ids){
-  ids.forEach(id=>{delete state.marks[id];});
+  ids.forEach(id=>delete state.marks[id]);
   state.categories.forEach(c=>c.cards=c.cards.filter(k=>!ids.includes(k.id)));
-  state.faceup=state.faceup.filter(x=>!ids.includes(x));
-  state.hand=(state.hand||[]).filter(x=>!ids.includes(x)); state.extras=null; state.draft=null;
+  state.faceup=state.faceup.filter(x=>!ids.includes(x)); state.hand=state.hand.filter(x=>!ids.includes(x));
   state.log=state.log.filter(e=>!e.cards.some(id=>ids.includes(id)));
 }
-document.addEventListener('change',e=>{
-  const t=e.target;
-  if(t.id==='auto'){commit(()=>state.auto=t.checked); return;}
-  if(t.dataset.pname){const v=t.value.trim(); if(v) commit(()=>state.players.find(p=>p.id===t.dataset.pname).name=v); else render(); return;}
-  if(t.dataset.me){commit(()=>{state.me=t.dataset.me; state.hand=[];}); return;}
-  if(t.dataset.dealer){commit(()=>{state.dealer=t.dataset.dealer; state.extras=null;}); return;}
-  if(t.dataset.extra){const D=dealInfo(); const id=t.dataset.extra; commit(()=>{const cur=state.players.filter(p=>D.extra[p.id]).map(p=>p.id); state.extras=t.checked?[...new Set([...cur,id])]:cur.filter(x=>x!==id);}); return;}
-  if(t.dataset.resp){const d=state.draft||(state.draft=defaultDraft()); d.resp=d.resp||{}; d.resp[t.dataset.resp]=t.value; save(); render(); return;}
-  if(t.dataset.catname){const v=t.value.trim(); if(v) commit(()=>state.categories.find(c=>c.id===t.dataset.catname).name=v); else render(); return;}
-  if(t.dataset.cname){const v=t.value.trim(); const c=allCards().find(c=>c.id===t.dataset.cname); if(v) commit(()=>state.categories.find(x=>x.id===c.cat).cards.find(k=>k.id===c.id).name=v); else render(); return;}
-  if(t.dataset.ccolor){const id=t.dataset.ccolor; commit(()=>{for(const cat of state.categories){const k=cat.cards.find(k=>k.id===id); if(k)k.color=t.value;}}); return;}
-  if(t.id==='preset'){if(t.value){state.pendingPreset=t.value; render();} return;}
-  // suggestion draft
-  if(t.id==='f-by'||t.id==='f-shower'||t.id==='f-shown'||t.dataset.fcat){
-    const d=state.draft||(state.draft=defaultDraft()); d.resp=d.resp||{};
-    const keepGeneric=()=>{for(const k in d.resp) if(d.resp[k]&&d.resp[k]!=='none'&&d.resp[k]!=='some') d.resp[k]='some';};
-    if(t.id==='f-by'){d.by=t.value; if(d.shower===d.by)d.shower=''; d.shown=''; d.resp={};}
-    if(t.id==='f-shower'){d.shower=t.value; d.shown='';}
-    if(t.id==='f-shown') d.shown=t.value;
-    if(t.dataset.fcat){d.cards[t.dataset.fcat]=t.value; d.shown=''; keepGeneric();}
-    save(); render();
+const toggle=(arr,v)=>arr.includes(v)?arr.filter(x=>x!==v):[...arr,v];
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-a]');
+  if(!t){ if(state.menu&&!e.target.closest('.menu')) ui(()=>state.menu=false); return; }
+  const a=t.dataset.a, v=t.dataset.v; const d=state.draft;
+  if(a==='closeturn-bg'){ if(e.target===t) ui(()=>{state.modal=false}); return; }
+  if(a!=='menu'&&state.menu) state.menu=false;
+  switch(a){
+    case 'count': ui(()=>{const n=+v; while(state.players.length<n)state.players.push({id:uid(),name:''}); state.players=state.players.slice(0,n); state.extras=[]; state.faceup=[];}); break;
+    case 'next': ui(()=>{const D=dealInfo(); state.step = state.step===1&&D.rem===0 ? 3 : state.step+1;}); break;
+    case 'back': ui(()=>{const D=dealInfo(); state.step = state.step===3&&D.rem===0 ? 1 : state.step-1;}); break;
+    case 'wizcards': ui(()=>state.view='cards'); break;
+    case 'wizback': ui(()=>state.view='game'); break;
+    case 'extra': commit(()=>state.extras=toggle(state.extras||[],v)); break;
+    case 'faceup': commit(()=>{state.faceup=toggle(state.faceup,v); state.hand=state.hand.filter(x=>x!==v);}); break;
+    case 'leftover': commit(()=>{state.leftover=v; state.faceup=[]; }); break;
+    case 'hand': commit(()=>state.hand=toggle(state.hand,v)); break;
+    case 'start': ui(()=>{state.started=true; state.view='game'; history=[];}); break;
+    case 'menu': ui(()=>state.menu=!state.menu); break;
+    case 'view': ui(()=>{state.view=v; window.scrollTo(0,0);}); break;
+    case 'hidetip': ui(()=>state.tip=false); break;
+    case 'asknew': ui(()=>state.confirm='new'); break;
+    case 'cancel': ui(()=>state.confirm=null); break;
+    case 'donew': history=[]; ui(()=>{state=freshGame(state);}); break;
+    case 'undo': if(history.length){state=JSON.parse(history.pop()); state.modal=false; state.menu=false; save(); render();} break;
+    case 'cell': {const [cid,o]=v.split('|'); commit(()=>{const m=state.marks[cid]||(state.marks[cid]={}); const ord=[undefined,'y','n','m']; const nx=ord[(ord.indexOf(m[o])+1)%4]; if(nx)m[o]=nx; else delete m[o];}); break;}
+    case 'openturn': ui(()=>{state.draft=defaultDraft(); state.modal=true;}); break;
+    case 'closeturn': ui(()=>state.modal=false); break;
+    case 'd-type': ui(()=>d.type=v); break;
+    case 'd-by': ui(()=>{d.by=v; d.shower=null; d.shown=null; d.resp={};}); break;
+    case 'd-card': ui(()=>{const [cat,cid]=v.split('|'); d.cards[cat]=d.cards[cat]===cid?undefined:cid; d.shown=null; for(const k in d.resp) if(d.resp[k]!=='none'&&d.resp[k]!=='some') delete d.resp[k];}); break;
+    case 'd-shower': ui(()=>{d.shower=v; d.shown=null;}); break;
+    case 'd-shown': ui(()=>d.shown=d.shown===v?null:v); break;
+    case 'd-resp': ui(()=>{const [pid,r]=v.split('|'); d.resp[pid]=d.resp[pid]===r?undefined:r;}); break;
+    case 'saveturn': {
+      const cards=cats().map(c=>d.cards[c.id]).filter(Boolean); let entry;
+      if(d.type==='accuse') entry={type:'accuse',by:d.by,cards};
+      else if(state.rule==='all'){const responses={}; for(const pid in d.resp) if(d.resp[pid]&&pid!==d.by) responses[pid]=d.resp[pid]; entry={by:d.by,cards,responses};}
+      else entry={by:d.by,cards,shower:d.shower==='none'?null:d.shower,shown:d.by===state.me?d.shown:null};
+      commit(()=>{state.log.push(entry); state.modal=false;}); break;}
+    case 'dellog': commit(()=>state.log.splice(+v,1)); break;
+    case 'rule': ui(()=>state.rule=v); break;
+    case 'delcard': commit(()=>removeCards([v])); break;
+    case 'delcat': commit(()=>{const c=state.categories.find(x=>x.id===v); removeCards(c.cards.map(k=>k.id)); state.categories=state.categories.filter(x=>x.id!==v);}); break;
+    case 'addcat': commit(()=>state.categories.push({id:uid(),name:'New group',q:'',cards:[]})); break;
+    case 'loadpreset': commit(()=>{state.categories=buildCats(state.pendingPreset); state.marks={}; state.log=[]; state.hand=[]; state.faceup=[]; state.extras=[]; state.pendingPreset=null;}); break;
+    case 'cancelpreset': ui(()=>state.pendingPreset=null); break;
   }
 });
-document.addEventListener('input',e=>{if(e.target.id==='notes'){state.notes=e.target.value; save();}});
-document.addEventListener('submit',e=>{
-  e.preventDefault(); const f=e.target;
-  if(f.id==='sugform'){const d=state.draft||defaultDraft();
-    const cards=state.categories.filter(c=>c.cards.length).map(c=>d.cards[c.id]||'').filter(Boolean); if(!cards.length)return;
-    let entry;
-    if(d.type==='accuse') entry={type:'accuse',by:d.by,cards};
-    else if(state.rule==='all'){const responses={}; for(const pid in (d.resp||{})){let r=d.resp[pid]; if(!r||pid===d.by)continue; if(r!=='none'&&r!=='some'&&d.by!==state.me) r='some'; responses[pid]=r;} entry={by:d.by,cards,responses};}
-    else entry={by:d.by,cards,shower:d.shower||null,shown:d.by===state.me?(d.shown||null):null};
-    commit(()=>{state.log.push(entry); state.draft={type:'suggest',by:nextAfter(d.by),cards:{},shower:'',shown:'',resp:{}};}); return;}
-  if(f.dataset.addcard){const inp=f.querySelector('input'); const v=inp.value.trim(); if(!v)return; const catId=f.dataset.addcard;
-    commit(()=>state.categories.find(c=>c.id===catId).cards.push({id:uid(),name:v}));
-    const again=document.getElementById('add-'+catId); if(again)again.focus(); }
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.name){const p=state.players.find(p=>p.id===t.dataset.name); if(p){p.name=t.value; save();}}
+  if(t.id==='notes'){state.notes=t.value; save();}
 });
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.name&&state.started) render();
+  if(t.id==='auto') commit(()=>state.auto=t.checked);
+  if(t.id==='preset'&&t.value) ui(()=>state.pendingPreset=t.value);
+  if(t.dataset.catname){const v=t.value.trim(); if(v)commit(()=>state.categories.find(c=>c.id===t.dataset.catname).name=v);}
+  if(t.dataset.cname){const v=t.value.trim(); if(v)commit(()=>{for(const c of state.categories){const k=c.cards.find(k=>k.id===t.dataset.cname); if(k)k.name=v;}});}
+  if(t.dataset.ccolor) commit(()=>{for(const c of state.categories){const k=c.cards.find(k=>k.id===t.dataset.ccolor); if(k)k.color=t.value;}});
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault(); const f=e.target; if(!f.dataset.addcard)return;
+  const inp=f.querySelector('input'); const v=inp.value.trim(); if(!v)return; const id=f.dataset.addcard;
+  commit(()=>state.categories.find(c=>c.id===id).cards.push({id:uid(),name:v}));
+  const again=document.getElementById('add-'+id); if(again)again.focus();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.modal||state.menu))ui(()=>{state.modal=false;state.menu=false;});});
 render();
 })();
 </script>
