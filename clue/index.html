@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="A simple Clue detective notebook: a 3-step setup, then one button per turn while the sheet works out the rest.">
+<meta name="description" content="A simple Clue detective notebook: 3-step setup, one button per turn, automatic deductions, and predictions.">
 <title>Clue Detective Notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,700;6..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -137,6 +137,20 @@ td.env{background:color-mix(in srgb,var(--accent) 5%,transparent)}
 .legend .mk{width:24px;height:22px;font-size:12px}
 @media (max-width:520px){.sheet .namecol{min-width:104px}.cardname{font-size:13px;padding-left:8px;gap:6px}.mk{width:32px;height:32px}.ph{min-width:38px}.ph .pn{max-width:46px;font-size:12px}.ph .meta{font-size:10px}td.cell{padding:3px 1px}.slot .v{font-size:16px}}
 
+/* predictions */
+.pred{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:12px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.pgroup{display:grid;gap:6px;min-width:0}
+.pgroup .lab{font-size:12px;color:var(--muted);font-weight:600}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 70px 38px;gap:8px;align-items:center;font-size:14px}
+.prow .pn{display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pbar{height:6px;border-radius:6px;background:var(--soft);overflow:hidden;border:1px solid var(--line)}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.pp{text-align:right;font-size:13px}
+.ask{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--soft);border-radius:12px;padding:12px 14px}
+.ask>div{min-width:0;flex:1 1 240px;display:grid;gap:4px}
+.mk.pc{font-family:var(--f-mono);font-size:11px;font-weight:500;color:var(--accent)}
+
 /* sticky bottom bar */
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);z-index:20;padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .bar .in{max-width:900px;margin:0 auto;display:flex;gap:10px}
@@ -209,7 +223,7 @@ function freshGame(prev){
   const players=prev?prev.players:[{id:uid(),name:''},{id:uid(),name:''},{id:uid(),name:''},{id:uid(),name:''}];
   return {started:false,step:1,view:'game',categories:prev?prev.categories:buildCats('clue-2016'),players,me:players[0].id,
     extras:prev?prev.extras:[],leftover:prev?prev.leftover:'deal',faceup:[],hand:[],marks:{},log:[],notes:'',
-    auto:true,rule:prev?prev.rule:'first',tip:true,draft:null,modal:false,menu:false,confirm:null,pendingPreset:null};
+    auto:true,rule:prev?prev.rule:'first',tip:true,showPred:prev?prev.showPred!==false:true,draft:null,modal:false,menu:false,confirm:null,pendingPreset:null};
 }
 let state; try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!state||!state.categories||!state.players) state=freshGame();
@@ -289,7 +303,72 @@ function solve(){
     if(ids.length&&ids.every(id=>K[id][pid]==='n')){ids.forEach(id=>conflicts.add(id+'|'+pid));return;}
     ids.forEach(id=>{if(!K[id][pid])maybe.add(id+'|'+pid)});
   });
-  return {K,conflicts,maybe};
+  return {K,conflicts,maybe,constraints,envClauses};
+}
+
+/* ---------- predictions: sample deals that fit everything recorded ---------- */
+let predCache={key:null,res:null};
+function rng(seed){let s=(seed>>>0)||1; return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function hashStr(str){let h=2166136261; for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),16777619); return h>>>0;}
+function predict(S,D){
+  const key=JSON.stringify([state.marks,state.log,state.hand,state.extras,state.faceup,state.leftover,state.players.map(p=>p.id),state.me,allCards().map(c=>c.id),state.auto]);
+  if(predCache.key===key) return predCache.res;
+  const res=computePredictions(S,D,key); predCache={key,res}; return res;
+}
+function computePredictions(S,D,key){
+  if(!D.known||!cats().length) return {status:'unknown'};
+  const K=S.K, players=state.players.map(p=>p.id), C=cats();
+  const live=allCards().filter(c=>!state.faceup.includes(c.id));
+  const R=rng(hashStr(key)); const samples=[]; let tries=0; const t0=performance.now();
+  const envCand=C.map(cat=>{const f=cat.cards.find(c=>K[c.id].env==='y'); return f?[f.id]:cat.cards.filter(c=>K[c.id].env!=='n'&&!state.faceup.includes(c.id)).map(c=>c.id);});
+  if(envCand.some(a=>!a.length)) return {status:'none'};
+  while(samples.length<1500&&tries<60000&&performance.now()-t0<150){
+    tries++;
+    const env=envCand.map(a=>a[Math.floor(R()*a.length)]);
+    if(env.some(id=>players.some(p=>K[id][p]==='y'))) continue;
+    const cap={...D.sizes}, owner={}; let ok=true;
+    for(const c of live){ if(env.includes(c.id))continue; const y=players.find(p=>K[c.id][p]==='y'); if(y){ if(cap[y]<=0){ok=false;break;} owner[c.id]=y; cap[y]--; } }
+    if(!ok) continue;
+    const rest=live.filter(c=>!env.includes(c.id)&&!owner[c.id]).map(c=>c.id);
+    for(let i=rest.length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [rest[i],rest[j]]=[rest[j],rest[i]];}
+    for(const id of rest){
+      const el=players.filter(p=>cap[p]>0&&K[id][p]!=='n'); if(!el.length){ok=false;break;}
+      let tot=el.reduce((s,p)=>s+cap[p],0), r=R()*tot, pick=el[el.length-1];
+      for(const p of el){ r-=cap[p]; if(r<0){pick=p;break;} }
+      owner[id]=pick; cap[pick]--;
+    }
+    if(!ok) continue;
+    if(S.constraints.some(([pid,ids])=>!ids.some(id=>owner[id]===pid))) continue;
+    if(S.envClauses.some(ids=>ids.every(id=>env.includes(id)))) continue;
+    samples.push({env,owner});
+  }
+  if(!samples.length) return {status:tries>=60000||performance.now()-t0>=150?'hard':'none'};
+  const envP={}; const combos={};
+  samples.forEach(s=>{ s.env.forEach(id=>envP[id]=(envP[id]||0)+1); const k=s.env.join('|'); combos[k]=(combos[k]||0)+1; });
+  for(const id in envP) envP[id]/=samples.length;
+  const bestKey=Object.keys(combos).sort((a,b)=>combos[b]-combos[a])[0];
+  // best question for me: the one whose answer is least predictable (most information)
+  let ask=null;
+  const solvedAll=C.every((cat,i)=>envCand[i].length===1);
+  if(!solvedAll&&samples.length>=40){
+    const n=players.length, mi=pIdx(state.me), order=[]; for(let i=1;i<n;i++)order.push(players[(mi+i)%n]);
+    const use=samples.slice(0,800);
+    let combosList=[[]]; C.forEach(cat=>{const nx=[]; combosList.forEach(cb=>cat.cards.forEach(c=>{if(!state.faceup.includes(c.id))nx.push([...cb,c.id])})); combosList=nx.length>3000?nx.slice(0,3000):nx;});
+    let best=-1;
+    combosList.forEach(ids=>{
+      const out={};
+      use.forEach(s=>{
+        let done=false;
+        for(const p of order){const held=ids.filter(id=>s.owner[id]===p); if(held.length){ held.forEach(id=>{const k=p+'|'+id; out[k]=(out[k]||0)+1/held.length;}); done=true; break; }}
+        if(!done) out.none=(out.none||0)+1;
+      });
+      let H=0; for(const k in out){const q=out[k]/use.length; if(q>0)H-=q*Math.log2(q);}
+      const tie=ids.reduce((s,id)=>s+(envP[id]||0),0)*0.01;
+      if(H+tie>best){best=H+tie; ask={ids,H};}
+    });
+    if(ask&&ask.H<0.05) ask=null;
+  }
+  return {status:'ok',n:samples.length,envP,best:bestKey.split('|'),bestP:combos[bestKey]/samples.length,ask};
 }
 
 /* ---------- views ---------- */
@@ -369,7 +448,29 @@ function header(){
 }
 function confirmNew(){return `<div class="confirm"><span>Start a new game? This clears the sheet and turn history. Players and cards stay.</span><button class="btn" type="button" data-a="donew">Start new game</button><button class="btn" type="button" data-a="cancel">Cancel</button></div>`;}
 
+function predCard(S,D,P){
+  if(state.showPred===false) return `<button class="link plain" type="button" data-a="togglepred" style="justify-self:start">Show predictions</button>`;
+  const solved=cats().every(cat=>cat.cards.some(c=>S.K[c.id].env==='y'));
+  const head=`<div class="row spread"><h3>Predictions</h3><button class="link plain" type="button" data-a="togglepred">Hide</button></div>`;
+  if(solved) return `<div class="pred">${head}<p><b>Case solved.</b> Make your accusation on your next turn.</p></div>`;
+  if(!P||P.status==='unknown') return `<div class="pred">${head}<p class="muted small">Predictions need hand sizes. Go to Menu → Players &amp; your cards and say who got the extra cards.</p></div>`;
+  if(P.status==='none') return `<div class="pred">${head}<p class="alert">No deal fits everything recorded, so something was entered wrong. Check Menu → Turn history.</p></div>`;
+  if(P.status==='hard') return `<div class="pred">${head}<p class="muted small">Couldn’t find enough deals that fit what’s recorded. Double-check the turn history if this keeps showing.</p></div>`;
+  const rows=cats().map(cat=>{
+    const list=cat.cards.map(c=>({c,p:P.envP[c.id]||0})).filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,3);
+    return `<div class="pgroup"><span class="lab">${esc(cat.q||cat.name)}</span>${list.map(x=>`<div class="prow"><span class="pn">${dot(x.c)}${esc(x.c.name)}</span><span class="pbar"><i style="width:${Math.round(x.p*100)}%"></i></span><span class="pp count">${pct(x.p)}</span></div>`).join('')}</div>`}).join('');
+  const best=P.best.map(id=>esc((cardById(id)||{}).name));
+  const ask=P.ask?`<div class="ask"><div><b>Smart question for your next turn</b><div class="picks" style="margin-top:6px">${P.ask.ids.map(id=>{const c=cardById(id);return `<span class="tagc">${dot(c)}${esc(c.name)}</span>`}).join('')}</div>
+      <p class="muted small">The answer to this is the hardest to guess, so it should teach you the most.${P.ask.ids.some(id=>state.hand.includes(id))?' It includes a card you hold, which hides what you’re really after.':''}</p></div>
+      <button class="btn" type="button" data-a="useask">Ask this</button></div>`:'';
+  return `<div class="pred">${head}
+    <p class="small">Most likely: <b>${best[0]}</b>, with the <b>${best[1]||'?'}</b>, in the <b>${best[2]||'?'}</b> <span class="muted">(${pct(P.bestP)} chance for all three)</span></p>
+    <div class="pgrid">${rows}</div>${ask}
+    <p class="muted small">Based on ${P.n.toLocaleString()} possible deals that fit everything recorded so far. These are estimates, not certainties.</p></div>`;
+}
+const pct=p=>p>=0.995?'99%':p<0.01?'<1%':Math.round(p*100)+'%';
 function gameView(S,D){
+  const P=state.showPred!==false?predict(S,D):null;
   const verdict=`<section class="verdict" aria-label="Solution so far">${cats().map(cat=>{
     const sol=cat.cards.find(c=>S.K[c.id].env==='y'), left=cat.cards.filter(c=>S.K[c.id].env!=='n').length;
     return `<div class="slot ${sol?'solved':''}"><span class="q">${esc(cat.q||cat.name)}</span><span class="v">${sol?esc(sol.name):'?'}</span><span class="s">${sol?'Solved!':left+' left'}</span></div>`}).join('')}</section>`;
@@ -390,12 +491,13 @@ function gameView(S,D){
         const man=(state.marks[c.id]||{})[o], der=k[o], mb=!man&&!der&&S.maybe.has(c.id+'|'+o), bad=S.conflicts.has(c.id+'|'+o);
         const v=man||der||(mb?'m':''); const auto=!man&&(der||mb);
         const label=`${c.name}, ${pName(o)}: ${v==='y'?'has it':v==='n'?'does not have it':v==='m'?'maybe':'unknown'}${auto?' (worked out)':''}`;
-        body+=`<td class="cell ${o==='env'?'env':''}"><button type="button" class="mk ${v} ${auto?'auto':''} ${bad?'conflict':''}" data-a="cell" data-v="${c.id}|${o}" aria-label="${esc(label)}">${v==='y'?'✓':v==='n'?'✕':v==='m'?'?':''}</button></td>`;
+        const showP=o==='env'&&!v&&P&&P.status==='ok';
+        body+=`<td class="cell ${o==='env'?'env':''}"><button type="button" class="mk ${v} ${auto?'auto':''} ${bad?'conflict':''} ${showP?'pc':''}" data-a="cell" data-v="${c.id}|${o}" aria-label="${esc(label)}${showP?', '+pct(P.envP[c.id]||0)+' chance':''}">${v==='y'?'✓':v==='n'?'✕':v==='m'?'?':showP?pct(P.envP[c.id]||0):''}</button></td>`;
       });
       body+='</tr>';
     });
   });
-  return `${verdict}${tip}
+  return `${verdict}${predCard(S,D,P)}${tip}
     ${S.conflicts.size?`<div class="alert">Some marks don’t add up (shown in red). Check them, or look at Menu → Turn history for a wrong entry.</div>`:''}
     <div class="gridwrap"><table class="sheet"><thead><tr><th class="namecol" scope="col">Card</th>${head}</tr></thead><tbody>${body}</tbody></table></div>
     <div class="legend"><span><i class="mk y">✓</i>has it</span><span><i class="mk n">✕</i>doesn’t</span><span><i class="mk m">?</i>maybe</span><span><i class="mk y auto">✓</i>dashed = worked out for you</span></div>
@@ -514,6 +616,8 @@ document.addEventListener('click',e=>{
     case 'menu': ui(()=>state.menu=!state.menu); break;
     case 'view': ui(()=>{state.view=v; window.scrollTo(0,0);}); break;
     case 'hidetip': ui(()=>state.tip=false); break;
+    case 'togglepred': ui(()=>state.showPred=state.showPred===false); break;
+    case 'useask': {const S=solve(),P=predict(S,dealInfo()); if(!P||!P.ask)break; ui(()=>{const dr=defaultDraft(); dr.by=state.me; cats().forEach((cat,i)=>dr.cards[cat.id]=P.ask.ids[i]); state.draft=dr; state.modal=true;}); break;}
     case 'asknew': ui(()=>state.confirm='new'); break;
     case 'cancel': ui(()=>state.confirm=null); break;
     case 'donew': history=[]; ui(()=>{state=freshGame(state);}); break;
