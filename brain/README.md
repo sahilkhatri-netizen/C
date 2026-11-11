@@ -223,3 +223,12 @@ questions), real column names (167 checked), ✅ reaction instead of echo replie
 `meeting_task_replies.fire_note` starts with "candidate test" or `app_config.skills_candidate_live = 'true'`; rule #59
 is merged into permissions. A/B harness `zz_ab_start(case, orig_id, mode, text)` / `zz_ab_runs`.
 A/B result: echo cases 3/3 reacted with no text; fresh questions −35% cost, 44→36 steps, SQL errors 6→1, shorter replies.
+
+### Switched on (11 Nov 2026, approved by Aakash: "Do it all")
+- `outbox_gate_mode = enforce`; `skills_candidate_live = true`; `alter role service_role set statement_timeout = '25s'`.
+- `ai_tool_guide`: chat runs may ask one question; `where_is` only when the source is unknown; one statement per sql call
+  (before: `skills-candidate/ai_tool_guide_before_20261111.md`).
+- Checks: a test nudge on the holiday was held (never sent); the live brief is 35k chars with the new skills; a live
+  shadow reply took 5 steps, $0.005, no timeout, no SQL error. Since the embedding fix: 0 timeouts in 25 real runs.
+- Undo: set `outbox_gate_mode` to 'observe' (or 'off'), `skills_candidate_live` to 'false',
+  `alter role service_role reset statement_timeout`, restore the tool guide from the file above.
