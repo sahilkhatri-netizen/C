@@ -1,32 +1,41 @@
-# Offer Breakdown video tracking (13 Nov 2026)
+# Funnel video tracking (13 Nov 2026)
 
-Shows in the pre-call notes how much of the Offer Breakdown video a lead watched.
+Pre-call notes and the closer's booking thread show how much of the two funnel videos a lead watched:
 
-## How it works
+| id | Video | Page | When | Length |
+|---|---|---|---|---|
+| `power-funnel` | Power Funnel video | `dfy.independentonlinecoach.com/` | before applying | ~29 min |
+| `offer-breakdown` | Offer Breakdown video | `/call-scheduled-dfy` | after booking | ~34 min |
 
-1. `page-script.html` goes in the footer of the GHL funnel step `/call-scheduled-dfy` (the page shown right after booking).
-2. The video on that page is GHL's own player (~34 min, **autoplays muted**). The script counts only the seconds that
-   play **with sound on, with the tab in front**. Skipping ahead doesn't count. Muted autoplay doesn't count.
-3. Each time the lead passes another 5%, the script posts to the Supabase function `video-progress`
-   (`video-progress/index.ts`, deployed with JWT off; it checks the video id and only raises the stored %).
-4. The function finds the GHL contact (contact id → email → phone, using the email/phone GHL saved in the browser
-   when they applied, `localStorage._ud`) and writes:
-   - Supabase `video_watch` (one row per contact + video: `max_pct`, `watched_sec`, `duration_sec`, `first_at`, `last_at`)
-     and `video_watch_events` (every ping, with the result, for debugging)
-   - GHL contact field **Offer Video Watched %** (`kg0uyvqWv6f8ZVv2sWDk`)
-   - GHL tags `offer-video-25`, `-50`, `-75`, `-100` (100 = 95%+), each added once
-5. The pre-call note job (`ai_jobs.lead_notes`, rule 7, copy in `../routines/note1-lead-notes-prompt.txt`) reads `video_watch`.
+Both are GHL's own video player and both **autoplay muted**. Only seconds played **with sound on, with the tab in front** count. Skipping ahead doesn't count.
+
+## Pieces
+
+1. **`page-script.html`**: paste once into the DFY funnel's funnel-wide **Footer** tracking code, so it runs on every step.
+   On the home page the lead usually isn't known yet. Progress is kept in the browser and sent as soon as they are
+   (after the application, GHL stores their email/phone in `localStorage._ud`).
+2. **Supabase function `video-progress`** (`video-progress/index.ts`, JWT off, checks video ids, only ever raises the %).
+   It finds the GHL contact (id → email → phone) and writes:
+   - `video_watch`: one row per contact + video (`max_pct`, `watched_sec`, `duration_sec`, `first_at`, `last_at`)
+   - `video_watch_events`: every ping with its result (for debugging)
+   - GHL fields **Offer Video Watched %** (`kg0uyvqWv6f8ZVv2sWDk`) and **Power Funnel Video Watched %** (`gFhpd2M26IkaKdUmgEYk`)
+   - GHL tags `offer-video-25/50/75/100` and `power-funnel-video-25/50/75/100` (100 = 95%+)
+3. **1-hour Slack update**: `public.video_hour_check()`, run by cron `video-hour-check-5min`. One hour after a booking it
+   replies in that booking's Slack thread, tagging the closer, with both percentages and a next step. One post per
+   appointment (`video_hour_posts`). It skips cancelled bookings and calls that have already started. It starts by itself
+   with the first real (non internal-test) tracking ping, so nothing posts before the page script is live.
+4. **Pre-call notes**: rule 7 in `ai_jobs.lead_notes` (copy in `../routines/note1-lead-notes-prompt.txt`) reads `video_watch`.
 
 ## Limits
 
-- It tracks only the browser the lead applied from. On another phone or browser the watch shows as "not tracked", never as "didn't watch".
-- Note 1 is written when the call is booked, usually before the lead has watched. The % shows up in notes written later (for example on confirmation).
-- The page also has a hidden Wistia copy of the video (`0quz6oc5jo`). The function accepts that id too, but the script tracks the visible GHL video.
+- Only the phone/browser they applied from is tracked. Watching elsewhere shows as "not tracked", never "didn't watch".
+- Note 1 is written at booking, before most people watch the Offer video. The 1-hour update and later notes carry the numbers.
 
 ## Check it
 
 ```sql
 select * from video_watch order by last_at desc limit 20;
-select at, contact_id, pct, matched_by, result from video_watch_events order by id desc limit 20;
+select at, contact_id, media_id, pct, matched_by, result from video_watch_events order by id desc limit 20;
+select * from video_hour_posts order by posted_at desc limit 20;
+select public.video_hour_check();  -- run the 1-hour check now
 ```
-A `contact not found` or `no ident` result means the browser had no saved email or phone.

@@ -1,6 +1,9 @@
-// video-progress: records how much of the Offer Breakdown video a lead watched (13 Nov 2026, Aakash/Sahil).
+// video-progress: records how much of the two funnel videos a lead watched (13 Nov 2026, Aakash/Sahil):
+//   power-funnel    = Power Funnel video on the home page dfy.independentonlinecoach.com/ (before applying, ~29 min)
+//   offer-breakdown = Offer Breakdown video on /call-scheduled-dfy (after booking, ~34 min)
+// Both autoplay muted; the page script only counts seconds played with sound on.
 //
-// Called by the small script on dfy.independentonlinecoach.com/call-scheduled-dfy (see ../page-script.html)
+// Called by the small script in the DFY funnel footer (see ../page-script.html)
 // every time the viewer passes another 5% of the video (with sound on — muted autoplay is not counted). Public endpoint (the browser calls it), so it:
 //   - only accepts the known video ids,
 //   - only ever RAISES the stored %, never lowers it,
@@ -10,17 +13,19 @@
 // What it writes:
 //   Supabase public.video_watch      — one row per contact + video: max %, seconds watched, first/last time
 //   Supabase public.video_watch_events — every ping (debugging)
-//   GHL contact field "Offer Video Watched %" (kg0uyvqWv6f8ZVv2sWDk) — the max %
-//   GHL contact tag offer-video-25 / -50 / -75 / -100 when that milestone is first passed (100 = 95%+)
+//   GHL contact field "Offer Video Watched %" (kg0uyvqWv6f8ZVv2sWDk) / "Power Funnel Video Watched %" (gFhpd2M26IkaKdUmgEYk)
+//   GHL tags offer-video-25/-50/-75/-100 or power-funnel-video-25/... when first passed (100 = 95%+)
 //
 // Body (JSON, sent as text/plain so the browser skips the CORS preflight):
 //   { media, pct, watched, duration, page, ident: { contact_id?, email?, phone? } }
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// "offer-breakdown" = the GHL-hosted video on /call-scheduled-dfy (what leads actually see; ~34 min, autoplays muted).
-// "0quz6oc5jo" = a hidden Wistia copy on the same page, kept in case it is switched back on.
-const MEDIA_OK = new Set(["offer-breakdown", "0quz6oc5jo"]);
-const PCT_FIELD = "kg0uyvqWv6f8ZVv2sWDk";
+// media id -> GHL field + tag prefix. "0quz6oc5jo" = a hidden Wistia copy of the offer video, kept in case it is switched on.
+const MEDIA: Record<string, { field: string; tag: string }> = {
+  "offer-breakdown": { field: "kg0uyvqWv6f8ZVv2sWDk", tag: "offer-video" },
+  "0quz6oc5jo": { field: "kg0uyvqWv6f8ZVv2sWDk", tag: "offer-video" },
+  "power-funnel": { field: "gFhpd2M26IkaKdUmgEYk", tag: "power-funnel-video" },
+};
 const LOCATION = "LZkgKOxmYpiZl17MKuno";
 const API = "https://services.leadconnectorhq.com";
 const MILESTONES = [25, 50, 75, 100];
@@ -96,7 +101,8 @@ Deno.serve(async (req) => {
   const log = (contact_id: string | null, matched_by: string | null, result: string) =>
     db.from("video_watch_events").insert({ contact_id, media_id: media, pct, watched_sec: watched, duration_sec: duration, matched_by, ident, page, ua, result }).then(() => {}, () => {});
 
-  if (!MEDIA_OK.has(media)) { await log(null, null, "unknown media"); return json({ ok: false, error: "unknown media" }, 400); }
+  const M = MEDIA[media];
+  if (!M) { await log(null, null, "unknown media"); return json({ ok: false, error: "unknown media" }, 400); }
   if (pct < 1) return json({ ok: true, skipped: "nothing watched yet" });
   if (!ident.contact_id && !ident.email && !ident.phone) { await log(null, null, "no ident"); return json({ ok: false, error: "no contact info" }); }
 
@@ -110,7 +116,7 @@ Deno.serve(async (req) => {
   const newPct = Math.max(oldPct, pct);
   const reached = MILESTONES.filter((m) => (m === 100 ? newPct >= 95 : newPct >= m));
   const have = new Set<string>(prev?.ghl_tags ?? []);
-  const newTags = reached.map((m) => `offer-video-${m}`).filter((t) => !have.has(t));
+  const newTags = reached.map((m) => `${M.tag}-${m}`).filter((t) => !have.has(t));
 
   const now = new Date().toISOString();
   await db.from("video_watch").upsert({
@@ -124,7 +130,7 @@ Deno.serve(async (req) => {
   // GHL: number field whenever the max goes up by 5+ points (or a milestone is crossed); tags once per milestone
   const errors: string[] = [];
   if (newPct >= oldPct + 5 || newTags.length || (!prev && newPct > 0)) {
-    const r = await ghl(tok, "PUT", `/contacts/${who.id}`, { customFields: [{ id: PCT_FIELD, field_value: newPct }] });
+    const r = await ghl(tok, "PUT", `/contacts/${who.id}`, { customFields: [{ id: M.field, field_value: newPct }] });
     if (!r.ok) errors.push(`field ${r.status}: ${r.t.slice(0, 160)}`);
   }
   if (newTags.length) {
