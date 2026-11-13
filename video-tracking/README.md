@@ -20,7 +20,7 @@ Both are GHL's own video player and both **autoplay muted**. Only seconds played
    - `video_watch_events`: every ping with its result (for debugging)
    - GHL fields **Offer Video Watched %** (`kg0uyvqWv6f8ZVv2sWDk`) and **Power Funnel Video Watched %** (`gFhpd2M26IkaKdUmgEYk`)
    - GHL tags `offer-video-25/50/75/100` and `power-funnel-video-25/50/75/100` (100 = 95%+)
-3. **1-hour Slack update**: `public.video_hour_check()`, run by cron `video-hour-check-5min`. One hour after a booking it
+3. **45-minute Slack update**: `public.video_hour_check()`, run by cron `video-hour-check-5min`. 45 minutes after a booking it
    replies in that booking's Slack thread, tagging the closer, with both percentages and a next step. One post per
    appointment (`video_hour_posts`). It skips cancelled bookings and calls that have already started. It starts by itself
    with the first real (non internal-test) tracking ping, so nothing posts before the page script is live.

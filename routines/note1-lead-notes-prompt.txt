@@ -28,7 +28,7 @@ GATHER (one pass, keep it cheap):
    - TRIAGE SCRIPT Video line: Offer 75%+ = WATCHED branch. 25–74% = "partly watched — ask what stood out, ask them to finish it before the call". Under 25% or not tracked = not-watched branch — UNLESS they replied "WATCHED" or "READY" on WhatsApp/SMS since booking (check the conversation): then WATCHED branch and write "says watched (replied WATCHED)".
    - Power Funnel 50%+ = warmer lead (they sat through most of the pitch before applying) — use as a tie-breaker between grades, and mention it in the opener context.
    - ACTIVITY "Pre-call" line: "Power Funnel N% · Offer video N%" (or "not tracked"). Never mark "not watched" from old data. Parts B and C: no video bullets.
-   - IOCtopus posts a separate ":tv: Video check · 1 hr after booking" reply in the booking thread with the latest numbers — don't duplicate it.
+   - IOCtopus posts a separate ":tv: Video check · 45 min after booking" reply in the booking thread with the latest numbers — don't duplicate it.
 8. ACTIVITY (build the ACTIVITY section from this):
    - First visit time: from attributionSource.fbc (format "fb.1.<epoch ms>.<id>") → convert the ms to IST; if no fbc, use attributionSource's own timestamp or the contact dateAdded. Landing page = attributionSource.url path ("/" = VSL home page, "/apply-dfy" = form page directly).
    - Applied time = newest form submission createdAt (IST). Say the minutes between first visit and applying ("13 min from ad click to submit").

@@ -1,0 +1,108 @@
+Paste everything below the line into Claude in Chrome, while logged in to GoHighLevel (app.gohighlevel.com or your white-label GHL login) as an admin.
+
+----------------------------------------------------------------
+
+Task: add one tracking script to the footer of the DFY funnel in GoHighLevel. Do not change anything else.
+
+1. In GoHighLevel, make sure the sub-account is "Aakash Varma Consulting" (location id LZkgKOxmYpiZl17MKuno).
+2. Left menu: Sites → Funnels. Open the funnel whose domain is dfy.independentonlinecoach.com (the DFY funnel; its steps include the home page "/", "/apply-dfy" and "/call-scheduled-dfy"). If more than one funnel matches, stop and tell me their names.
+3. Open the funnel's "Settings" tab (funnel-level settings, NOT a single step's page settings).
+4. Find the "Body Tracking Code" box (some GHL versions call it "Footer Tracking Code"). Do NOT use "Head Tracking Code".
+5. If the box already has code in it, keep ALL of it. Click at the very END of the existing code, add a new empty line, and paste the script below there. Never delete or edit the existing code.
+   If the box already contains the text "IOC funnel video tracking", it is already installed: stop and tell me.
+6. Paste exactly this script (everything from <script> to </script>):
+
+<script>
+(function () {
+  if (window.__iocVideoWatch) return; window.__iocVideoWatch = 1;
+  var URL_ = "https://ugiurxkbbuhtvbehpkvb.supabase.co/functions/v1/video-progress";
+  var PAGES = { "/": "power-funnel", "/call-scheduled-dfy": "offer-breakdown" };
+  var path = location.pathname.replace(/\/+$/, "") || "/";
+  var MEDIA = PAGES[path] || null;   // null = this page has no tracked video (still sends any saved progress)
+
+  // ---------- who is watching ----------
+  function ident() {
+    var out = {}, q = new URLSearchParams(location.search);
+    ["contact_id", "email", "phone"].forEach(function (k) { if (q.get(k)) out[k] = q.get(k); });
+    if (!out.contact_id && q.get("contactId")) out.contact_id = q.get("contactId");
+    try {
+      var ud = JSON.parse(localStorage.getItem("_ud") || "{}");
+      (function walk(o, d) {
+        if (!o || typeof o !== "object" || d > 3) return;
+        Object.keys(o).forEach(function (k) {
+          var v = o[k];
+          if (typeof v === "string") {
+            if (!out.email && /email/i.test(k) && /@/.test(v)) out.email = v.trim();
+            else if (!out.phone && /phone/i.test(k) && v.replace(/\D/g, "").length >= 10) out.phone = v.trim();
+            else if (!out.contact_id && /^(contact_?id|contactId)$/i.test(k) && v.length > 10) out.contact_id = v.trim();
+          } else walk(v, d + 1);
+        });
+      })(ud, 0);
+    } catch (e) {}
+    return (out.contact_id || out.email || out.phone) ? out : null;
+  }
+
+  // ---------- progress per video, kept in this browser ----------
+  function load(m) { try { var s = JSON.parse(localStorage.getItem("ioc_vw_" + m) || "null"); if (s && s.secs) return s; } catch (e) {} return { secs: {}, sent: 0, dur: 0 }; }
+  function store(m, s) { try { localStorage.setItem("ioc_vw_" + m, JSON.stringify(s)); } catch (e) {} }
+  function count(s) { return Object.keys(s.secs).length; }
+  function pct(s) { return s.dur ? Math.min(100, Math.round(count(s) * 100 / s.dur)) : 0; }
+
+  // send this video's progress if it passed a new 5% step (force = send current value anyway, if anything was watched)
+  function flush(m, force) {
+    var s = load(m), p = pct(s);
+    if (!count(s) || !s.dur) return;
+    var step = p >= 95 ? 100 : Math.floor(p / 5) * 5;
+    if (!force && step <= s.sent) return;
+    var who = ident();
+    if (!who) return;                // not known yet: keep it, send later
+    if (step > s.sent) { s.sent = step; store(m, s); }
+    var body = JSON.stringify({ media: m, pct: p, watched: count(s), duration: Math.round(s.dur), page: path, ident: who });
+    try { if (navigator.sendBeacon && navigator.sendBeacon(URL_, new Blob([body], { type: "text/plain" }))) return; } catch (e) {}
+    try { fetch(URL_, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body, keepalive: true }); } catch (e) {}
+  }
+  function flushAll(force) { for (var k in PAGES) flush(PAGES[k], force); }
+
+  // the biggest visible <video> longer than a minute = the page's main video
+  function video() {
+    var vs = document.querySelectorAll("video"), best = null, bw = 0;
+    for (var i = 0; i < vs.length; i++) {
+      var w = vs[i].getBoundingClientRect().width;
+      if (w > bw && vs[i].duration > 60) { best = vs[i]; bw = w; }
+    }
+    return best;
+  }
+
+  var lastT = null;
+  setInterval(function () {
+    if (!MEDIA) { flushAll(false); return; }
+    var v = video();
+    if (!v) return;
+    var s = load(MEDIA);
+    if (isFinite(v.duration) && v.duration > 0) s.dur = v.duration;
+    var watching = !v.paused && !v.ended && !v.muted && v.volume > 0 && document.visibilityState === "visible";
+    var t = v.currentTime;
+    if (watching && lastT !== null) {
+      var dt = t - lastT;
+      // normal playback (up to ~2x speed) counts; a jump / seek does not
+      if (dt > 0 && dt <= 2.5) for (var x = Math.floor(lastT); x < Math.floor(t); x++) s.secs[x] = 1;
+    }
+    lastT = t;
+    store(MEDIA, s);
+    flush(MEDIA, false);
+  }, 1000);
+
+  // send anything saved from earlier pages now (e.g. Power Funnel progress once they've applied)
+  setTimeout(function () { flushAll(true); }, 1500);
+  function bye() { flushAll(true); }
+  window.addEventListener("pagehide", bye);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") bye(); });
+})();
+</script>
+
+7. Click "Save". If GHL shows a "Publish" button for the funnel or asks to publish, publish it.
+8. Check it worked: open https://dfy.independentonlinecoach.com/call-scheduled-dfy in a new tab, open DevTools → Console, and type:
+   window.__iocVideoWatch
+   It should print 1. Do the same on https://dfy.independentonlinecoach.com/ and check it also prints 1.
+   If it prints undefined, reload the page with Ctrl+Shift+R (Cmd+Shift+R on Mac) and check again. If it is still undefined, tell me what the footer box contains now.
+9. Report back: which funnel you edited, whether there was existing code in the box (kept), and the result of step 8 on both pages.
