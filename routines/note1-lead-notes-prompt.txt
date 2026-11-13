@@ -23,12 +23,15 @@ GATHER (one pass, keep it cheap):
    select media_id, max_pct, watched_sec, duration_sec, first_at, last_at from video_watch where contact_id = '<contactId>' and media_id in ('power-funnel','offer-breakdown');
    - power-funnel = Power Funnel video on the home page (watched BEFORE applying, ~29 min). offer-breakdown = Offer Breakdown video on the booking page (AFTER booking, ~34 min). Same numbers are on GHL fields "Power Funnel Video Watched %" / "Offer Video Watched %" and tags power-funnel-video-25/50/75/100, offer-video-25/50/75/100.
    - Only seconds played WITH SOUND ON and the tab in front count (both videos autoplay muted; muted autoplay and skipping don't count). Tracking only sees the phone/browser they applied from.
-   - WEB RESEARCH bullets (Note 1): "**Power Funnel video:** watched N% (M of T min)" and "**Offer video:** watched N% (M of T min) · last watched <IST day, time>". No row → "not tracked (0%)" — never write "did not watch". Bookings made before 13 Nov 2026 → "unknown (tracking started 13 Nov)".
+   - WEB RESEARCH bullets (Note 1):
+     • Power Funnel (watched BEFORE applying, so it is ready when Note 1 is written): "**Power Funnel video:** watched N% (M of T min)". No row → "not tracked (0%)" — never write "did not watch".
+     • Offer video: Note 1 is written right after booking, before they can watch it, so DON'T guess. Write "**Offer video:** % comes in the 45-min Offer video check in this thread" — unless a row with last_at after this booking already exists, then "**Offer video:** watched N% (M of T min)". Later notes (confirmed etc.): "watched N%" or "not tracked (0%)".
+     • Bookings made before 13 Nov 2026 → "unknown (tracking started 13 Nov)".
    - Offer video for the CURRENT booking: count it only if last_at is after this booking was made (or up to 2 hours before). Older rows → HISTORY ("Offer video: N% on <date>, earlier booking").
    - TRIAGE SCRIPT Video line: Offer 75%+ = WATCHED branch. 25–74% = "partly watched — ask what stood out, ask them to finish it before the call". Under 25% or not tracked = not-watched branch — UNLESS they replied "WATCHED" or "READY" on WhatsApp/SMS since booking (check the conversation): then WATCHED branch and write "says watched (replied WATCHED)".
    - Power Funnel 50%+ = warmer lead (they sat through most of the pitch before applying) — use as a tie-breaker between grades, and mention it in the opener context.
    - ACTIVITY "Pre-call" line: "Power Funnel N% · Offer video N%" (or "not tracked"). Never mark "not watched" from old data. Parts B and C: no video bullets.
-   - IOCtopus posts a separate ":tv: Video check · 45 min after booking" reply in the booking thread with the latest numbers — don't duplicate it.
+   - IOCtopus posts a separate ":tv: Offer video check · 45 min after booking" reply in the booking thread with the Offer video % — don't duplicate it.
 8. ACTIVITY (build the ACTIVITY section from this):
    - First visit time: from attributionSource.fbc (format "fb.1.<epoch ms>.<id>") → convert the ms to IST; if no fbc, use attributionSource's own timestamp or the contact dateAdded. Landing page = attributionSource.url path ("/" = VSL home page, "/apply-dfy" = form page directly).
    - Applied time = newest form submission createdAt (IST). Say the minutes between first visit and applying ("13 min from ad click to submit").
