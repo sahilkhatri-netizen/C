@@ -9,6 +9,12 @@ Pre-call notes and the closer's booking thread show how much of the two funnel v
 
 Both are GHL's own video player and both **autoplay muted**. Only seconds played **with sound on, with the tab in front** count. Skipping ahead doesn't count.
 
+> **14 Nov 2026 — repo synced to the LIVE versions.** Since the first build, the live setup gained (made directly in
+> Supabase / the funnel, now copied here): page-script v2 (each page's main video = the top-most video; all other clips
+> are tracked as `testimonials`), a `testimonials` media type in `video-progress` (tag `testimonials-watched`, per-clip
+> detail in `video_watch.detail`), a guard that ignores "main video" reports under 5 min (`MIN_MAIN_SEC = 300`), the
+> app-token-first GHL auth in the function, and a Testimonials line in the 45-min post. DB functions: `db-functions.sql`.
+
 ## Pieces
 
 1. **`page-script.html`**: paste once into the DFY funnel's funnel-wide **Footer** tracking code, so it runs on every step.
